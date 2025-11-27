@@ -84,14 +84,38 @@
 
       <div class="action-buttons">
         <button id="btnDownload" class="btn-success">⬇️ Descargar Excel Fusionado</button>
-        <button id="btnSplit" class="btn-secondary">📂 Separar por Proyecto/Nómina/TipoPago</button>
+        <button id="btnSplit" class="btn-secondary">📂 Separar por Proyecto/Nómina/TipoPago/Banco</button>
       </div>
     </div>
 
     <!-- Split Results Section -->
     <div id="splitResults" class="split-results hidden">
       <h2>📁 Archivos Generados</h2>
-      <p class="split-description">Se generarán archivos separados por: Proyecto (Jardín/Otros) → Nómina → TipoPago</p>
+      <p class="split-description">Archivos separados por: Proyecto (Jardín/Otros) → Nómina → TipoPago → Banco</p>
+      
+      <!-- Payroll period selector for Banamex format -->
+      <div class="payroll-period">
+        <label>Periodo de Nómina (para Banamex):</label>
+        <select id="selectQuincena">
+          <option value="1a">1a Quincena</option>
+          <option value="2a">2a Quincena</option>
+        </select>
+        <select id="selectMes">
+          <option value="Ene">Enero</option>
+          <option value="Feb">Febrero</option>
+          <option value="Mar">Marzo</option>
+          <option value="Abr">Abril</option>
+          <option value="May">Mayo</option>
+          <option value="Jun">Junio</option>
+          <option value="Jul">Julio</option>
+          <option value="Ago">Agosto</option>
+          <option value="Sep">Septiembre</option>
+          <option value="Oct">Octubre</option>
+          <option value="Nov">Noviembre</option>
+          <option value="Dic">Diciembre</option>
+        </select>
+      </div>
+      
       <div id="splitTree" class="split-tree"></div>
       <button id="btnDownloadAll" class="btn-success">⬇️ Descargar Todos los Archivos</button>
     </div>

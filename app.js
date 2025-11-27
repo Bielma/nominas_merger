@@ -475,7 +475,7 @@ function isJardin(proyecto) {
 }
 
 /**
- * Splits the merged data by Proyecto -> Nomina -> TipoPago
+ * Splits the merged data by Proyecto -> Nomina -> TipoPago -> Banco
  */
 function performSplit() {
   if (!mergedData || mergedData.length === 0) {
@@ -499,16 +499,22 @@ function performSplit() {
     
     // Level 3: TipoPago
     const tipoPago = (row.TIPOPAGO || 'SIN_TIPOPAGO').toUpperCase().trim();
+    
+    // Level 4: Banco
+    const banco = (row.BANCO || 'SIN_BANCO').toUpperCase().trim();
 
     // Initialize nested structure if needed
     if (!splitData[projectGroup][nomina]) {
       splitData[projectGroup][nomina] = {};
     }
     if (!splitData[projectGroup][nomina][tipoPago]) {
-      splitData[projectGroup][nomina][tipoPago] = [];
+      splitData[projectGroup][nomina][tipoPago] = {};
+    }
+    if (!splitData[projectGroup][nomina][tipoPago][banco]) {
+      splitData[projectGroup][nomina][tipoPago][banco] = [];
     }
 
-    splitData[projectGroup][nomina][tipoPago].push(row);
+    splitData[projectGroup][nomina][tipoPago][banco].push(row);
   });
 
   // Display results
@@ -545,17 +551,28 @@ function displaySplitResults() {
       nominaName.textContent = `📋 ${nomina}`;
       nominaDiv.appendChild(nominaName);
 
-      for (const [tipoPago, rows] of Object.entries(tipoPagos)) {
+      for (const [tipoPago, bancos] of Object.entries(tipoPagos)) {
         const tipoPagoDiv = document.createElement('div');
-        tipoPagoDiv.className = 'split-tipopago';
+        tipoPagoDiv.className = 'split-tipopago-group';
         
-        const fileName = `${projectGroup}_${nomina}_${tipoPago}`;
-        tipoPagoDiv.innerHTML = `
-          <span>💰 ${tipoPago}</span>
-          <span class="count">${rows.length} registros</span>
-          <button class="btn-download-single" data-project="${projectGroup}" data-nomina="${nomina}" data-tipopago="${tipoPago}">⬇️</button>
-        `;
-        
+        const tipoPagoName = document.createElement('div');
+        tipoPagoName.className = 'split-tipopago-name';
+        tipoPagoName.textContent = `💰 ${tipoPago}`;
+        tipoPagoDiv.appendChild(tipoPagoName);
+
+        for (const [banco, rows] of Object.entries(bancos)) {
+          const bancoDiv = document.createElement('div');
+          bancoDiv.className = 'split-banco';
+          
+          bancoDiv.innerHTML = `
+            <span>🏦 ${banco}</span>
+            <span class="count">${rows.length} registros</span>
+            <button class="btn-download-single" data-project="${projectGroup}" data-nomina="${nomina}" data-tipopago="${tipoPago}" data-banco="${banco}">⬇️</button>
+          `;
+          
+          tipoPagoDiv.appendChild(bancoDiv);
+        }
+
         nominaDiv.appendChild(tipoPagoDiv);
       }
 
@@ -571,7 +588,8 @@ function displaySplitResults() {
       const project = e.target.dataset.project;
       const nomina = e.target.dataset.nomina;
       const tipoPago = e.target.dataset.tipopago;
-      downloadSingleSplitFile(project, nomina, tipoPago);
+      const banco = e.target.dataset.banco;
+      downloadSingleSplitFile(project, nomina, tipoPago, banco);
     });
   });
 
@@ -580,31 +598,63 @@ function displaySplitResults() {
 
 /**
  * Downloads a single split file
+ * For BANAMEX: special format with specific columns
  */
-function downloadSingleSplitFile(project, nomina, tipoPago) {
-  const rows = splitData[project]?.[nomina]?.[tipoPago];
+function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
+  const rows = splitData[project]?.[nomina]?.[tipoPago]?.[banco];
   if (!rows || rows.length === 0) {
     alert('No hay datos para este archivo');
     return;
   }
 
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
+  let ws;
+  let fileName;
   
-  const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
-  ws['!cols'] = colWidths;
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Datos');
-
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-  const fileName = `${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
 
+  // Check if BANAMEX - use special format
+  if (banco.toUpperCase() === 'BANAMEX') {
+    // Get payroll period from selectors
+    const quincena = document.getElementById('selectQuincena').value;
+    const mes = document.getElementById('selectMes').value;
+    const conceptoBancario = `${quincena} Nomina de ${mes}`;
+    
+    // Transform data to Banamex format
+    const banamexData = rows.map((row, index) => ({
+      'Tipo de Cuenta': 'Tarjeta',
+      'Cuenta': row.CUENTA || '',
+      'Importe': row.LIQUIDO || 0,
+      'Nombre/Razón Social': row.NOMBRE || '',
+      'Ref. Num.': index + 1,
+      'Ref. AlfN.': conceptoBancario
+    }));
+    
+    const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
+    ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
+    
+    const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
+    ws['!cols'] = colWidths;
+    
+    fileName = `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+  } else {
+    // Standard format for other banks
+    ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
+    
+    const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
+    ws['!cols'] = colWidths;
+    
+    fileName = `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Datos');
   XLSX.writeFile(wb, fileName);
 }
 
 /**
  * Downloads all split files at once
+ * Applies special Banamex format when banco is BANAMEX
  */
 function downloadAllSplitFiles() {
   if (!splitData) {
@@ -614,22 +664,54 @@ function downloadAllSplitFiles() {
 
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+  
+  // Get payroll period for Banamex files
+  const quincena = document.getElementById('selectQuincena').value;
+  const mes = document.getElementById('selectMes').value;
+  const conceptoBancario = `${quincena} Nomina de ${mes}`;
 
   for (const [project, nominas] of Object.entries(splitData)) {
     for (const [nomina, tipoPagos] of Object.entries(nominas)) {
-      for (const [tipoPago, rows] of Object.entries(tipoPagos)) {
-        if (rows.length === 0) continue;
+      for (const [tipoPago, bancos] of Object.entries(tipoPagos)) {
+        for (const [banco, rows] of Object.entries(bancos)) {
+          if (rows.length === 0) continue;
 
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
-        
-        const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
-        ws['!cols'] = colWidths;
+          const wb = XLSX.utils.book_new();
+          let ws;
+          let fileName;
 
-        XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+          // Check if BANAMEX - use special format
+          if (banco.toUpperCase() === 'BANAMEX') {
+            // Transform data to Banamex format
+            const banamexData = rows.map((row, index) => ({
+              'Tipo de Cuenta': 'Tarjeta',
+              'Cuenta': row.CUENTA || '',
+              'Importe': row.LIQUIDO || 0,
+              'Nombre/Razón Social': row.NOMBRE || '',
+              'Ref. Num.': index + 1,
+              'Ref. AlfN.': conceptoBancario
+            }));
+            
+            const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
+            ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
+            
+            const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
+            ws['!cols'] = colWidths;
+            
+            fileName = `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+          } else {
+            // Standard format for other banks
+            ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
+            
+            const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
+            ws['!cols'] = colWidths;
+            
+            fileName = `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
+          }
 
-        const fileName = `${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
-        XLSX.writeFile(wb, fileName);
+          XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+          XLSX.writeFile(wb, fileName);
+        }
       }
     }
   }

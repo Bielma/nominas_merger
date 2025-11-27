@@ -340,8 +340,40 @@ tbody tr:hover {
 .split-description {
   text-align: center;
   color: #666;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   font-size: 0.9rem;
+}
+
+.payroll-period {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #fff8e6;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+}
+
+.payroll-period label {
+  font-weight: 600;
+  color: #856404;
+}
+
+.payroll-period select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+}
+
+.payroll-period select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 .split-tree {
@@ -384,6 +416,48 @@ tbody tr:hover {
   padding: 0.4rem 0;
   color: #666;
   font-size: 0.9rem;
+}
+
+.split-tipopago-group {
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.split-tipopago-name {
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.split-banco {
+  margin-left: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.split-banco .count {
+  background: #e0e0e0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.split-banco .btn-download-single {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.split-banco .btn-download-single:hover {
+  background: #5a6fd6;
 }
 
 .split-tipopago .count {
