@@ -14,7 +14,8 @@ let removals = [];      // Removed employees (bajas)
 // Expected columns (kept in Spanish to match Excel files)
 const COL_NEW = ['TIPOPAGO', 'NUE', 'NUP', 'RFC', 'CURP', 'NOMBRE', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
 const COL_BASE = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A'];
-const COL_CASH = ['RFC', 'NOMBRE', 'MODALIDAD', 'MONTO'];
+const COL_CASH = ['RFC', 'NOMBRE', 'MODALIDAD', 'MONTO', 'MOTIVO'];
+const COL_REMOVALS = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'MOTIVO'];
 const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
 
 // Required columns to detect header row
@@ -243,13 +244,27 @@ function performMerge() {
   });
 
   // Build set of RFCs from cash payments (these are not considered additions)
+  // Also track removals from cash file (where MOTIVO contains "BAJA")
   const cashRfcs = new Set();
+  const cashRemovals = new Map(); // RFC -> row data for people marked as "BAJA"
+  
   if (cashData && cashData.length > 0) {
     cashData.forEach(row => {
       const rfc = (row.RFC || '').toUpperCase().trim();
-      if (rfc) cashRfcs.add(rfc);
+      const motivo = (row.MOTIVO || '').toUpperCase();
+      
+      if (rfc) {
+        cashRfcs.add(rfc);
+        
+        // Check if MOTIVO contains "BAJA"
+        if (motivo.includes('BAJA')) {
+          cashRemovals.set(rfc, row);
+          console.log('Removal detected from cash (BAJA):', row.NOMBRE || rfc, '-', row.MOTIVO);
+        }
+      }
     });
     console.log('Cash payments excluded:', cashRfcs.size, 'people');
+    console.log('Cash removals (BAJA):', cashRemovals.size, 'people');
   }
 
   // Detect additions (in new but not in base, and not in cash payments)
@@ -265,11 +280,48 @@ function performMerge() {
     }
   });
 
-  // Detect removals (in base but not in new)
+  // Detect removals: 
+  // 1. People in base but not in new Excel
+  // 2. People in cash file with MOTIVO containing "BAJA"
   removals = [];
+  
+  // Case 1: in base but not in new
   rfcBase.forEach((rowBase, rfc) => {
     if (!rfcNew.has(rfc)) {
-      removals.push(rowBase);
+      // Check if there's a MOTIVO from cash file for this person
+      const cashRow = cashRemovals.get(rfc);
+      removals.push({
+        ...rowBase,
+        MOTIVO: cashRow ? cashRow.MOTIVO : 'No aparece en nómina nueva'
+      });
+    }
+  });
+  
+  // Case 2: marked as BAJA in cash file (add if not already in removals)
+  const removalsRfcs = new Set(removals.map(r => (r.RFC || '').toUpperCase()));
+  cashRemovals.forEach((cashRow, rfc) => {
+    if (!removalsRfcs.has(rfc)) {
+      // Try to get full info from base if available, otherwise use cash data
+      const baseRow = rfcBase.get(rfc);
+      if (baseRow) {
+        removals.push({
+          ...baseRow,
+          MOTIVO: cashRow.MOTIVO || ''
+        });
+      } else {
+        // Create a minimal row from cash data
+        removals.push({
+          NUM: '',
+          NOMBRE: cashRow.NOMBRE || '',
+          RFC: rfc,
+          CUENTA: '',
+          BANCO: '',
+          TELEFONO: '',
+          'CORREO ELECTRONICO': '',
+          'SE ENVIA SOBRE A': '',
+          MOTIVO: cashRow.MOTIVO || ''
+        });
+      }
     }
   });
 
@@ -344,7 +396,7 @@ function displayResults() {
   tabAdditions.querySelector('.empty-msg').classList.toggle('hidden', additions.length > 0);
 
   // Removals table
-  renderTable(tableRemovals, removals, COL_BASE);
+  renderTable(tableRemovals, removals, COL_REMOVALS);
   tabRemovals.querySelector('.empty-msg').classList.toggle('hidden', removals.length > 0);
 
   // Final table
