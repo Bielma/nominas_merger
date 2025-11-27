@@ -15,8 +15,10 @@ const COL_NEW = ['TIPOPAGO', 'NUE', 'NUP', 'RFC', 'CURP', 'NOMBRE', 'CATEGORIA',
 const COL_BASE = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A'];
 const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
 
-// Row where headers start (0-indexed). Base Excel has headers on row 5 (index 4).
-const BASE_HEADER_ROW = 4;
+// Required columns to detect header row
+const REQUIRED_BASE_COLS = ['NOMBRE', 'RFC'];
+const REQUIRED_NEW_COLS = ['RFC', 'NOMBRE'];
+const MAX_HEADER_SEARCH_ROWS = 20; // Search headers in first 20 rows
 
 // DOM Elements
 const fileNewInput = document.getElementById('fileNuevo');
@@ -87,6 +89,43 @@ tabs.forEach(tab => {
 // ===============================
 
 /**
+ * Finds the row index where headers are located by searching for required columns
+ * @param {object} sheet - XLSX sheet object
+ * @param {string[]} requiredCols - Array of column names that must be present
+ * @returns {number} - 0-indexed row number where headers were found, or -1 if not found
+ */
+function findHeaderRow(sheet, requiredCols) {
+  const range = XLSX.utils.decode_range(sheet['!ref']);
+  const maxRow = Math.min(range.e.r, MAX_HEADER_SEARCH_ROWS);
+  
+  for (let row = 0; row <= maxRow; row++) {
+    const rowValues = [];
+    
+    // Collect all cell values in this row
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+      const cell = sheet[cellAddress];
+      if (cell && cell.v !== undefined) {
+        const value = String(cell.v).trim().toUpperCase();
+        rowValues.push(value);
+      }
+    }
+    
+    // Check if all required columns are present in this row
+    const foundAll = requiredCols.every(reqCol => 
+      rowValues.some(val => val.includes(reqCol.toUpperCase()))
+    );
+    
+    if (foundAll) {
+      console.log(`Headers found at row ${row + 1} (0-indexed: ${row})`);
+      return row;
+    }
+  }
+  
+  return -1; // Not found
+}
+
+/**
  * Reads an Excel file and converts it to an array of objects
  */
 function readExcel(file, type) {
@@ -97,17 +136,20 @@ function readExcel(file, type) {
       const workbook = XLSX.read(data, { type: 'array' });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       
-      let jsonData;
-      if (type === 'base') {
-        // Base Excel has headers on row 5 (0-indexed: 4), data starts on row 6
-        jsonData = XLSX.utils.sheet_to_json(firstSheet, { 
-          defval: '',
-          range: BASE_HEADER_ROW 
-        });
-      } else {
-        // New Excel has headers on first row
-        jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+      // Detect header row automatically
+      const requiredCols = type === 'base' ? REQUIRED_BASE_COLS : REQUIRED_NEW_COLS;
+      const headerRow = findHeaderRow(firstSheet, requiredCols);
+      
+      if (headerRow === -1) {
+        const colNames = requiredCols.join(', ');
+        alert(`No se encontraron los encabezados (${colNames}) en las primeras ${MAX_HEADER_SEARCH_ROWS} filas del archivo.`);
+        return;
       }
+      
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { 
+        defval: '',
+        range: headerRow 
+      });
 
       if (type === 'new') {
         newData = normalizeData(jsonData);
