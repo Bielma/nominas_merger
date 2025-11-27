@@ -341,9 +341,17 @@ function performMerge() {
   let num = 1;
 
   // Process ALL rows from new Excel (includes NORMAL and RETROACTIVO for same person)
+  // Skip rows without BANCO (SIN_BANCO)
   newData.forEach(rowNew => {
     const rfc = (rowNew.RFC || '').toUpperCase();
     const rowBase = rfcBase.get(rfc);
+    const banco = rowBase ? (rowBase.BANCO || '').toUpperCase().trim() : '';
+    
+    // Skip if no bank info
+    if (!banco) {
+      console.log('Skipped (no bank):', rowNew.NOMBRE || rfc);
+      return;
+    }
     
     mergedData.push({
       NUM: num++,
@@ -351,7 +359,7 @@ function performMerge() {
       RFC: rfc,
       CURP: rowNew.CURP || '',
       CUENTA: rowBase ? rowBase.CUENTA : '',
-      BANCO: rowBase ? rowBase.BANCO : '',
+      BANCO: banco,
       TELEFONO: rowBase ? rowBase.TELEFONO : '',
       'CORREO ELECTRONICO': rowBase ? rowBase['CORREO ELECTRONICO'] : '',
       'SE ENVIA SOBRE A': rowBase ? rowBase['SE ENVIA SOBRE A'] : '',
