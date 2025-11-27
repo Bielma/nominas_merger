@@ -14,13 +14,13 @@ let removals = [];      // Removed employees (bajas)
 // Expected columns (kept in Spanish to match Excel files)
 const COL_NEW = ['TIPOPAGO', 'NUE', 'NUP', 'RFC', 'CURP', 'NOMBRE', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
 const COL_BASE = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A'];
-const COL_CASH = ['NUM', 'NOMBRE', 'MODALIDAD', 'MONTO'];
+const COL_CASH = ['RFC', 'NOMBRE', 'MODALIDAD', 'MONTO'];
 const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
 
 // Required columns to detect header row
 const REQUIRED_BASE_COLS = ['NOMBRE', 'RFC'];
 const REQUIRED_NEW_COLS = ['RFC', 'NOMBRE'];
-const REQUIRED_CASH_COLS = ['NOMBRE', 'MONTO'];
+const REQUIRED_CASH_COLS = ['RFC', 'NOMBRE'];
 const MAX_HEADER_SEARCH_ROWS = 20; // Search headers in first 20 rows
 
 // DOM Elements
@@ -242,26 +242,25 @@ function performMerge() {
     if (rfc) rfcBase.set(rfc, row);
   });
 
-  // Build set of names from cash payments (these are not considered additions)
-  const cashNames = new Set();
+  // Build set of RFCs from cash payments (these are not considered additions)
+  const cashRfcs = new Set();
   if (cashData && cashData.length > 0) {
     cashData.forEach(row => {
-      const name = (row.NOMBRE || '').toUpperCase().trim();
-      if (name) cashNames.add(name);
+      const rfc = (row.RFC || '').toUpperCase().trim();
+      if (rfc) cashRfcs.add(rfc);
     });
-    console.log('Cash payments excluded:', cashNames.size, 'people');
+    console.log('Cash payments excluded:', cashRfcs.size, 'people');
   }
 
   // Detect additions (in new but not in base, and not in cash payments)
   additions = [];
   rfcNew.forEach((rowNew, rfc) => {
     if (!rfcBase.has(rfc)) {
-      // Check if this person is in cash payments (by name since cash doesn't have RFC)
-      const name = (rowNew.NOMBRE || '').toUpperCase().trim();
-      if (!cashNames.has(name)) {
+      // Check if this person is in cash payments (by RFC)
+      if (!cashRfcs.has(rfc)) {
         additions.push(rowNew);
       } else {
-        console.log('Excluded from additions (cash payment):', name);
+        console.log('Excluded from additions (cash payment):', rowNew.NOMBRE || rfc);
       }
     }
   });
