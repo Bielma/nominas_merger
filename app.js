@@ -13,10 +13,10 @@ let removals = [];      // Removed employees (bajas)
 
 // Expected columns (kept in Spanish to match Excel files)
 const COL_NEW = ['TIPOPAGO', 'NUE', 'NUP', 'RFC', 'CURP', 'NOMBRE', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
-const COL_BASE = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A'];
+const COL_BASE = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO'];
 const COL_CASH = ['RFC', 'NOMBRE', 'MODALIDAD', 'MONTO', 'MOTIVO'];
-const COL_REMOVALS = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'MOTIVO'];
-const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
+const COL_REMOVALS = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'MOTIVO'];
+const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
 
 // Required columns to detect header row
 const REQUIRED_BASE_COLS = ['NOMBRE', 'RFC'];
@@ -343,6 +343,7 @@ function performMerge() {
         TELEFONO: rowBase.TELEFONO || '',
         'CORREO ELECTRONICO': rowBase['CORREO ELECTRONICO'] || '',
         'SE ENVIA SOBRE A': rowBase['SE ENVIA SOBRE A'] || '',
+        TIPOPAGO: rowNew.TIPOPAGO || rowBase.TIPOPAGO || '',
         CATEGORIA: rowNew.CATEGORIA || '',
         PUESTO: rowNew.PUESTO || '',
         PROYECTO: rowNew.PROYECTO || '',
@@ -366,6 +367,7 @@ function performMerge() {
       TELEFONO: '',
       'CORREO ELECTRONICO': '',
       'SE ENVIA SOBRE A': '',
+      TIPOPAGO: rowNew.TIPOPAGO || '',
       CATEGORIA: rowNew.CATEGORIA || '',
       PUESTO: rowNew.PUESTO || '',
       PROYECTO: rowNew.PROYECTO || '',
@@ -448,4 +450,187 @@ function downloadMerged() {
 
   // Download
   XLSX.writeFile(wb, fileName);
+}
+
+// ===============================
+// Split Functionality
+// ===============================
+
+const btnSplit = document.getElementById('btnSplit');
+const btnDownloadAll = document.getElementById('btnDownloadAll');
+const splitResultsSection = document.getElementById('splitResults');
+const splitTree = document.getElementById('splitTree');
+
+let splitData = null; // Stores the hierarchical split structure
+
+btnSplit.addEventListener('click', performSplit);
+btnDownloadAll.addEventListener('click', downloadAllSplitFiles);
+
+/**
+ * Determines if a project code belongs to "Jardin" (ends in 200)
+ */
+function isJardin(proyecto) {
+  const proyectoStr = String(proyecto || '').trim();
+  return proyectoStr.endsWith('200');
+}
+
+/**
+ * Splits the merged data by Proyecto -> Nomina -> TipoPago
+ */
+function performSplit() {
+  if (!mergedData || mergedData.length === 0) {
+    alert('No hay datos para separar. Primero realiza la fusión.');
+    return;
+  }
+
+  // Initialize split structure
+  splitData = {
+    'JARDIN': {},
+    'OTROS': {}
+  };
+
+  // Group data hierarchically
+  mergedData.forEach(row => {
+    // Level 1: Proyecto (Jardin vs Otros)
+    const projectGroup = isJardin(row.PROYECTO) ? 'JARDIN' : 'OTROS';
+    
+    // Level 2: Nomina
+    const nomina = (row.NOMINA || 'SIN_NOMINA').toUpperCase().trim();
+    
+    // Level 3: TipoPago
+    const tipoPago = (row.TIPOPAGO || 'SIN_TIPOPAGO').toUpperCase().trim();
+
+    // Initialize nested structure if needed
+    if (!splitData[projectGroup][nomina]) {
+      splitData[projectGroup][nomina] = {};
+    }
+    if (!splitData[projectGroup][nomina][tipoPago]) {
+      splitData[projectGroup][nomina][tipoPago] = [];
+    }
+
+    splitData[projectGroup][nomina][tipoPago].push(row);
+  });
+
+  // Display results
+  displaySplitResults();
+}
+
+/**
+ * Displays the split results in a tree structure
+ */
+function displaySplitResults() {
+  splitResultsSection.classList.remove('hidden');
+  splitTree.innerHTML = '';
+
+  const projectIcons = { 'JARDIN': '🌳', 'OTROS': '🏢' };
+
+  for (const [projectGroup, nominas] of Object.entries(splitData)) {
+    // Skip empty project groups
+    if (Object.keys(nominas).length === 0) continue;
+
+    const projectDiv = document.createElement('div');
+    projectDiv.className = 'split-project';
+
+    const projectName = document.createElement('div');
+    projectName.className = 'split-project-name';
+    projectName.innerHTML = `${projectIcons[projectGroup] || '📁'} ${projectGroup}`;
+    projectDiv.appendChild(projectName);
+
+    for (const [nomina, tipoPagos] of Object.entries(nominas)) {
+      const nominaDiv = document.createElement('div');
+      nominaDiv.className = 'split-nomina';
+
+      const nominaName = document.createElement('div');
+      nominaName.className = 'split-nomina-name';
+      nominaName.textContent = `📋 ${nomina}`;
+      nominaDiv.appendChild(nominaName);
+
+      for (const [tipoPago, rows] of Object.entries(tipoPagos)) {
+        const tipoPagoDiv = document.createElement('div');
+        tipoPagoDiv.className = 'split-tipopago';
+        
+        const fileName = `${projectGroup}_${nomina}_${tipoPago}`;
+        tipoPagoDiv.innerHTML = `
+          <span>💰 ${tipoPago}</span>
+          <span class="count">${rows.length} registros</span>
+          <button class="btn-download-single" data-project="${projectGroup}" data-nomina="${nomina}" data-tipopago="${tipoPago}">⬇️</button>
+        `;
+        
+        nominaDiv.appendChild(tipoPagoDiv);
+      }
+
+      projectDiv.appendChild(nominaDiv);
+    }
+
+    splitTree.appendChild(projectDiv);
+  }
+
+  // Add click handlers for individual download buttons
+  splitTree.querySelectorAll('.btn-download-single').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const project = e.target.dataset.project;
+      const nomina = e.target.dataset.nomina;
+      const tipoPago = e.target.dataset.tipopago;
+      downloadSingleSplitFile(project, nomina, tipoPago);
+    });
+  });
+
+  splitResultsSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+/**
+ * Downloads a single split file
+ */
+function downloadSingleSplitFile(project, nomina, tipoPago) {
+  const rows = splitData[project]?.[nomina]?.[tipoPago];
+  if (!rows || rows.length === 0) {
+    alert('No hay datos para este archivo');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
+  
+  const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
+  ws['!cols'] = colWidths;
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+
+  const today = new Date();
+  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+  const fileName = `${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+
+  XLSX.writeFile(wb, fileName);
+}
+
+/**
+ * Downloads all split files at once
+ */
+function downloadAllSplitFiles() {
+  if (!splitData) {
+    alert('No hay datos para descargar');
+    return;
+  }
+
+  const today = new Date();
+  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+
+  for (const [project, nominas] of Object.entries(splitData)) {
+    for (const [nomina, tipoPagos] of Object.entries(nominas)) {
+      for (const [tipoPago, rows] of Object.entries(tipoPagos)) {
+        if (rows.length === 0) continue;
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
+        
+        const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
+        ws['!cols'] = colWidths;
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+
+        const fileName = `${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+      }
+    }
+  }
 }

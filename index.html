@@ -82,7 +82,18 @@
         </table>
       </div>
 
-      <button id="btnDownload" class="btn-success">⬇️ Descargar Excel Fusionado</button>
+      <div class="action-buttons">
+        <button id="btnDownload" class="btn-success">⬇️ Descargar Excel Fusionado</button>
+        <button id="btnSplit" class="btn-secondary">📂 Separar por Proyecto/Nómina/TipoPago</button>
+      </div>
+    </div>
+
+    <!-- Split Results Section -->
+    <div id="splitResults" class="split-results hidden">
+      <h2>📁 Archivos Generados</h2>
+      <p class="split-description">Se generarán archivos separados por: Proyecto (Jardín/Otros) → Nómina → TipoPago</p>
+      <div id="splitTree" class="split-tree"></div>
+      <button id="btnDownloadAll" class="btn-success">⬇️ Descargar Todos los Archivos</button>
     </div>
   </div>
 

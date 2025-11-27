@@ -287,3 +287,122 @@ tbody tr:hover {
 .empty-msg.hidden {
   display: none;
 }
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.action-buttons .btn-success,
+.action-buttons .btn-secondary {
+  margin: 0;
+}
+
+.btn-secondary {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto 2rem;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s;
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+}
+
+.split-results {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #eee;
+}
+
+.split-results.hidden {
+  display: none;
+}
+
+.split-results h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.split-description {
+  text-align: center;
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.split-tree {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.split-project {
+  margin-bottom: 1rem;
+}
+
+.split-project-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #667eea;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.split-nomina {
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.split-nomina-name {
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 0.25rem;
+}
+
+.split-tipopago {
+  margin-left: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.split-tipopago .count {
+  background: #e0e0e0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.split-tipopago .btn-download-single {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.split-tipopago .btn-download-single:hover {
+  background: #5a6fd6;
+}
