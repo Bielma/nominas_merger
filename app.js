@@ -24,6 +24,9 @@ const REQUIRED_NEW_COLS = ['RFC', 'NOMBRE'];
 const REQUIRED_CASH_COLS = ['RFC', 'NOMBRE'];
 const MAX_HEADER_SEARCH_ROWS = 20; // Search headers in first 20 rows
 
+// Project code for Jardin (can be changed if needed)
+const JARDIN_PROJECT = '1170141530100000200';
+
 // DOM Elements
 const fileNewInput = document.getElementById('fileNuevo');
 const fileBaseInput = document.getElementById('fileBase');
@@ -467,11 +470,11 @@ btnSplit.addEventListener('click', performSplit);
 btnDownloadAll.addEventListener('click', downloadAllSplitFiles);
 
 /**
- * Determines if a project code belongs to "Jardin" (ends in 200)
+ * Determines if a project code belongs to "Jardin"
  */
 function isJardin(proyecto) {
   const proyectoStr = String(proyecto || '').trim();
-  return proyectoStr.endsWith('200');
+  return proyectoStr === JARDIN_PROJECT;
 }
 
 /**
