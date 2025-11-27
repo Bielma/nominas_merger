@@ -231,19 +231,22 @@ function updateMergeButton() {
  * - Additions: people in new Excel not in base (by RFC)
  * - Removals: people in base not in new Excel (by RFC)
  * - Merge: base + additions, removing removals, updating data from new
+ * - Note: A person can have multiple rows with different TIPOPAGO (NORMAL, RETROACTIVO)
  */
 function performMerge() {
-  // Create maps by RFC for fast lookup
-  const rfcNew = new Map();
-  newData.forEach(row => {
-    const rfc = (row.RFC || '').toUpperCase();
-    if (rfc) rfcNew.set(rfc, row);
-  });
-
+  // Create map by RFC for base (one entry per person)
   const rfcBase = new Map();
   baseData.forEach(row => {
     const rfc = (row.RFC || '').toUpperCase();
     if (rfc) rfcBase.set(rfc, row);
+  });
+
+  // For new data, keep ALL rows (a person can have NORMAL and RETROACTIVO)
+  // Group by RFC to know which RFCs exist in new
+  const rfcNewSet = new Set();
+  newData.forEach(row => {
+    const rfc = (row.RFC || '').toUpperCase();
+    if (rfc) rfcNewSet.add(rfc);
   });
 
   // Build set of RFCs from cash payments (these are not considered additions)
@@ -270,13 +273,17 @@ function performMerge() {
     console.log('Cash removals (BAJA):', cashRemovals.size, 'people');
   }
 
-  // Detect additions (in new but not in base, and not in cash payments)
+  // Detect additions: people in new but not in base, and not in cash payments
+  // We need to track unique RFCs for additions (not all rows)
   additions = [];
-  rfcNew.forEach((rowNew, rfc) => {
-    if (!rfcBase.has(rfc)) {
+  const addedRfcs = new Set();
+  newData.forEach(rowNew => {
+    const rfc = (rowNew.RFC || '').toUpperCase();
+    if (rfc && !rfcBase.has(rfc) && !addedRfcs.has(rfc)) {
       // Check if this person is in cash payments (by RFC)
       if (!cashRfcs.has(rfc)) {
         additions.push(rowNew);
+        addedRfcs.add(rfc);
       } else {
         console.log('Excluded from additions (cash payment):', rowNew.NOMBRE || rfc);
       }
@@ -290,7 +297,7 @@ function performMerge() {
   
   // Case 1: in base but not in new
   rfcBase.forEach((rowBase, rfc) => {
-    if (!rfcNew.has(rfc)) {
+    if (!rfcNewSet.has(rfc)) {
       // Check if there's a MOTIVO from cash file for this person
       const cashRow = cashRemovals.get(rfc);
       removals.push({
@@ -328,48 +335,26 @@ function performMerge() {
     }
   });
 
-  // Create merged: people in both (updating data) + additions
+  // Create merged: iterate through ALL rows in newData
+  // Each row in newData becomes a row in mergedData (with base info if available)
   mergedData = [];
   let num = 1;
 
-  // First: people in both (update with new data)
-  rfcBase.forEach((rowBase, rfc) => {
-    if (rfcNew.has(rfc)) {
-      const rowNew = rfcNew.get(rfc);
-      mergedData.push({
-        NUM: num++,
-        NOMBRE: rowNew.NOMBRE || rowBase.NOMBRE,
-        RFC: rfc,
-        CURP: rowNew.CURP || '',
-        CUENTA: rowBase.CUENTA || '',
-        BANCO: rowBase.BANCO || '',
-        TELEFONO: rowBase.TELEFONO || '',
-        'CORREO ELECTRONICO': rowBase['CORREO ELECTRONICO'] || '',
-        'SE ENVIA SOBRE A': rowBase['SE ENVIA SOBRE A'] || '',
-        TIPOPAGO: rowNew.TIPOPAGO || rowBase.TIPOPAGO || '',
-        CATEGORIA: rowNew.CATEGORIA || '',
-        PUESTO: rowNew.PUESTO || '',
-        PROYECTO: rowNew.PROYECTO || '',
-        NOMINA: rowNew.NOMINA || '',
-        DESDE: rowNew.DESDE || '',
-        HASTA: rowNew.HASTA || '',
-        LIQUIDO: rowNew.LIQUIDO || ''
-      });
-    }
-  });
-
-  // Then: add additions
-  additions.forEach(rowNew => {
+  // Process ALL rows from new Excel (includes NORMAL and RETROACTIVO for same person)
+  newData.forEach(rowNew => {
+    const rfc = (rowNew.RFC || '').toUpperCase();
+    const rowBase = rfcBase.get(rfc);
+    
     mergedData.push({
       NUM: num++,
-      NOMBRE: rowNew.NOMBRE || '',
-      RFC: rowNew.RFC || '',
+      NOMBRE: rowNew.NOMBRE || (rowBase ? rowBase.NOMBRE : ''),
+      RFC: rfc,
       CURP: rowNew.CURP || '',
-      CUENTA: '',
-      BANCO: '',
-      TELEFONO: '',
-      'CORREO ELECTRONICO': '',
-      'SE ENVIA SOBRE A': '',
+      CUENTA: rowBase ? rowBase.CUENTA : '',
+      BANCO: rowBase ? rowBase.BANCO : '',
+      TELEFONO: rowBase ? rowBase.TELEFONO : '',
+      'CORREO ELECTRONICO': rowBase ? rowBase['CORREO ELECTRONICO'] : '',
+      'SE ENVIA SOBRE A': rowBase ? rowBase['SE ENVIA SOBRE A'] : '',
       TIPOPAGO: rowNew.TIPOPAGO || '',
       CATEGORIA: rowNew.CATEGORIA || '',
       PUESTO: rowNew.PUESTO || '',
