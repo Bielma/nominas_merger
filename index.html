@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merge Nóminas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🗂️ Merge de Nóminas</h1>
+    <p class="subtitle">Compara el Excel nuevo (quincenal) con el Excel base y genera un archivo fusionado.</p>
+
+    <div class="upload-section">
+      <div class="upload-box">
+        <label for="fileNuevo">📄 Excel Nuevo (Quincenal)</label>
+        <input type="file" id="fileNuevo" accept=".xlsx,.xls">
+        <p class="file-name" id="fileNuevoName">Sin archivo</p>
+        <p class="hint">Columnas: TIPOPAGO, NUE, NUP, RFC, CURP, NOMBRE, CATEGORIA, PUESTO, PROYECTO, NOMINA, DESDE, HASTA, LIQUIDO</p>
+      </div>
+
+      <div class="upload-box">
+        <label for="fileBase">📋 Excel Base</label>
+        <input type="file" id="fileBase" accept=".xlsx,.xls">
+        <p class="file-name" id="fileBaseName">Sin archivo</p>
+        <p class="hint">Columnas: NUM, NOMBRE, RFC, CUENTA, BANCO, TELEFONO, CORREO ELECTRONICO, SE ENVIA SOBRE A</p>
+      </div>
+    </div>
+
+    <button id="btnMerge" class="btn-primary" disabled>🔀 Comparar y Fusionar</button>
+
+    <div id="results" class="results hidden">
+      <div class="summary">
+        <div class="stat alta">
+          <span class="stat-num" id="countAltas">0</span>
+          <span class="stat-label">Altas</span>
+        </div>
+        <div class="stat baja">
+          <span class="stat-num" id="countBajas">0</span>
+          <span class="stat-label">Bajas</span>
+        </div>
+        <div class="stat total">
+          <span class="stat-num" id="countTotal">0</span>
+          <span class="stat-label">Total final</span>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="altas">🟢 Altas</button>
+        <button class="tab" data-tab="bajas">🔴 Bajas</button>
+        <button class="tab" data-tab="final">📊 Resultado Final</button>
+      </div>
+
+      <div class="tab-content" id="tabAltas">
+        <table id="tableAltas">
+          <thead><tr></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="empty-msg hidden">No hay altas en este periodo.</p>
+      </div>
+
+      <div class="tab-content hidden" id="tabBajas">
+        <table id="tableBajas">
+          <thead><tr></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="empty-msg hidden">No hay bajas en este periodo.</p>
+      </div>
+
+      <div class="tab-content hidden" id="tabFinal">
+        <table id="tableFinal">
+          <thead><tr></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <button id="btnDownload" class="btn-success">⬇️ Descargar Excel Fusionado</button>
+    </div>
+  </div>
+
+  <!-- SheetJS from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
