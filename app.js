@@ -341,17 +341,9 @@ function performMerge() {
   let num = 1;
 
   // Process ALL rows from new Excel (includes NORMAL and RETROACTIVO for same person)
-  // Skip rows without BANCO (SIN_BANCO)
   newData.forEach(rowNew => {
     const rfc = (rowNew.RFC || '').toUpperCase();
     const rowBase = rfcBase.get(rfc);
-    const banco = rowBase ? (rowBase.BANCO || '').toUpperCase().trim() : '';
-    
-    // Skip if no bank info
-    if (!banco) {
-      console.log('Skipped (no bank):', rowNew.NOMBRE || rfc);
-      return;
-    }
     
     mergedData.push({
       NUM: num++,
@@ -359,7 +351,7 @@ function performMerge() {
       RFC: rfc,
       CURP: rowNew.CURP || '',
       CUENTA: rowBase ? rowBase.CUENTA : '',
-      BANCO: banco,
+      BANCO: rowBase ? rowBase.BANCO : '',
       TELEFONO: rowBase ? rowBase.TELEFONO : '',
       'CORREO ELECTRONICO': rowBase ? rowBase['CORREO ELECTRONICO'] : '',
       'SE ENVIA SOBRE A': rowBase ? rowBase['SE ENVIA SOBRE A'] : '',
@@ -487,6 +479,13 @@ function performSplit() {
 
   // Group data hierarchically
   mergedData.forEach(row => {
+    // Level 4: Banco - Skip rows without bank info
+    const banco = (row.BANCO || '').toUpperCase().trim();
+    if (!banco) {
+      console.log('Split skipped (no bank):', row.NOMBRE || row.RFC);
+      return;
+    }
+    
     // Level 1: Proyecto (Jardin vs Otros)
     const projectGroup = isJardin(row.PROYECTO) ? 'JARDIN' : 'OTROS';
     
@@ -495,9 +494,6 @@ function performSplit() {
     
     // Level 3: TipoPago
     const tipoPago = (row.TIPOPAGO || 'SIN_TIPOPAGO').toUpperCase().trim();
-    
-    // Level 4: Banco
-    const banco = (row.BANCO || 'SIN_BANCO').toUpperCase().trim();
 
     // Initialize nested structure if needed
     if (!splitData[projectGroup][nomina]) {
