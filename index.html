@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Merge Nóminas</title>
+  <title>Nóminas</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,6 +24,14 @@
         <input type="file" id="fileBase" accept=".xlsx,.xls">
         <p class="file-name" id="fileBaseName">Sin archivo</p>
         <p class="hint">Columnas: NUM, NOMBRE, RFC, CUENTA, BANCO, TELEFONO, CORREO ELECTRONICO, SE ENVIA SOBRE A</p>
+      </div>
+
+      <div class="upload-box optional">
+        <label for="fileCash">💵 Excel Efectivo (Opcional)</label>
+        <input type="file" id="fileCash" accept=".xlsx,.xls">
+        <p class="file-name" id="fileCashName">Sin archivo</p>
+        <p class="hint">Columnas: NUM, NOMBRE, MODALIDAD, MONTO — Excluye estos de las altas</p>
+        <button type="button" id="btnClearCash" class="btn-clear hidden">✕ Quitar</button>
       </div>
     </div>
 

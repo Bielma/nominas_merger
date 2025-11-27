@@ -6,6 +6,7 @@
 // Global state
 let newData = null;     // Array of objects from new Excel
 let baseData = null;    // Array of objects from base Excel
+let cashData = null;    // Array of objects from cash payments Excel (optional)
 let mergedData = null;  // Merge result
 let additions = [];     // New employees (altas)
 let removals = [];      // Removed employees (bajas)
@@ -13,20 +14,25 @@ let removals = [];      // Removed employees (bajas)
 // Expected columns (kept in Spanish to match Excel files)
 const COL_NEW = ['TIPOPAGO', 'NUE', 'NUP', 'RFC', 'CURP', 'NOMBRE', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
 const COL_BASE = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A'];
+const COL_CASH = ['NUM', 'NOMBRE', 'MODALIDAD', 'MONTO'];
 const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
 
 // Required columns to detect header row
 const REQUIRED_BASE_COLS = ['NOMBRE', 'RFC'];
 const REQUIRED_NEW_COLS = ['RFC', 'NOMBRE'];
+const REQUIRED_CASH_COLS = ['NOMBRE', 'MONTO'];
 const MAX_HEADER_SEARCH_ROWS = 20; // Search headers in first 20 rows
 
 // DOM Elements
 const fileNewInput = document.getElementById('fileNuevo');
 const fileBaseInput = document.getElementById('fileBase');
+const fileCashInput = document.getElementById('fileCash');
 const fileNewName = document.getElementById('fileNuevoName');
 const fileBaseName = document.getElementById('fileBaseName');
+const fileCashName = document.getElementById('fileCashName');
 const btnMerge = document.getElementById('btnMerge');
 const btnDownload = document.getElementById('btnDownload');
+const btnClearCash = document.getElementById('btnClearCash');
 const resultsSection = document.getElementById('results');
 
 // Tabs
@@ -63,6 +69,23 @@ fileBaseInput.addEventListener('change', (e) => {
     fileBaseName.textContent = file.name;
     readExcel(file, 'base');
   }
+});
+
+fileCashInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    fileCashName.textContent = file.name;
+    btnClearCash.classList.remove('hidden');
+    readExcel(file, 'cash');
+  }
+});
+
+btnClearCash.addEventListener('click', () => {
+  cashData = null;
+  fileCashInput.value = '';
+  fileCashName.textContent = 'Sin archivo';
+  btnClearCash.classList.add('hidden');
+  console.log('Cash Excel cleared');
 });
 
 btnMerge.addEventListener('click', () => {
@@ -137,7 +160,14 @@ function readExcel(file, type) {
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       
       // Detect header row automatically
-      const requiredCols = type === 'base' ? REQUIRED_BASE_COLS : REQUIRED_NEW_COLS;
+      let requiredCols;
+      if (type === 'base') {
+        requiredCols = REQUIRED_BASE_COLS;
+      } else if (type === 'cash') {
+        requiredCols = REQUIRED_CASH_COLS;
+      } else {
+        requiredCols = REQUIRED_NEW_COLS;
+      }
       const headerRow = findHeaderRow(firstSheet, requiredCols);
       
       if (headerRow === -1) {
@@ -154,6 +184,9 @@ function readExcel(file, type) {
       if (type === 'new') {
         newData = normalizeData(jsonData);
         console.log('New Excel loaded:', newData.length, 'rows');
+      } else if (type === 'cash') {
+        cashData = normalizeData(jsonData);
+        console.log('Cash Excel loaded:', cashData.length, 'rows');
       } else {
         baseData = normalizeData(jsonData);
         console.log('Base Excel loaded:', baseData.length, 'rows');
@@ -209,11 +242,27 @@ function performMerge() {
     if (rfc) rfcBase.set(rfc, row);
   });
 
-  // Detect additions (in new but not in base)
+  // Build set of names from cash payments (these are not considered additions)
+  const cashNames = new Set();
+  if (cashData && cashData.length > 0) {
+    cashData.forEach(row => {
+      const name = (row.NOMBRE || '').toUpperCase().trim();
+      if (name) cashNames.add(name);
+    });
+    console.log('Cash payments excluded:', cashNames.size, 'people');
+  }
+
+  // Detect additions (in new but not in base, and not in cash payments)
   additions = [];
   rfcNew.forEach((rowNew, rfc) => {
     if (!rfcBase.has(rfc)) {
-      additions.push(rowNew);
+      // Check if this person is in cash payments (by name since cash doesn't have RFC)
+      const name = (rowNew.NOMBRE || '').toUpperCase().trim();
+      if (!cashNames.has(name)) {
+        additions.push(rowNew);
+      } else {
+        console.log('Excluded from additions (cash payment):', name);
+      }
     }
   });
 
