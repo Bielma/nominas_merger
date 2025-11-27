@@ -273,20 +273,35 @@ function performMerge() {
     console.log('Cash removals (BAJA):', cashRemovals.size, 'people');
   }
 
-  // Detect additions: people in new but not in base, and not in cash payments
-  // We need to track unique RFCs for additions (not all rows)
+  // Detect additions:
+  // Case 1: People in new but not in base (and not in cash payments)
+  // Case 2: People in new, in base but WITHOUT bank/account info, and not in cash payments
   additions = [];
   const addedRfcs = new Set();
   newData.forEach(rowNew => {
     const rfc = (rowNew.RFC || '').toUpperCase();
-    if (rfc && !rfcBase.has(rfc) && !addedRfcs.has(rfc)) {
-      // Check if this person is in cash payments (by RFC)
-      if (!cashRfcs.has(rfc)) {
-        additions.push(rowNew);
-        addedRfcs.add(rfc);
-      } else {
-        console.log('Excluded from additions (cash payment):', rowNew.NOMBRE || rfc);
-      }
+    if (!rfc || addedRfcs.has(rfc)) return;
+    
+    const rowBase = rfcBase.get(rfc);
+    const isInBase = !!rowBase;
+    const hasBankInfo = rowBase && String(rowBase.CUENTA || '').trim();
+    const isInCash = cashRfcs.has(rfc);
+    
+    // Case 1: Not in base and not in cash
+    if (!isInBase && !isInCash) {
+      additions.push(rowNew);
+      addedRfcs.add(rfc);
+      console.log('Addition (new employee):', rowNew.NOMBRE || rfc);
+    }
+    // Case 2: In base but no bank/account info and not in cash
+    else if (isInBase && !hasBankInfo && !isInCash) {
+      additions.push(rowNew);
+      addedRfcs.add(rfc);
+      console.log('Addition (no bank info):', rowNew.NOMBRE || rfc);
+    }
+    // Excluded: in cash payments
+    else if (!isInBase && isInCash) {
+      console.log('Excluded from additions (cash payment):', rowNew.NOMBRE || rfc);
     }
   });
 
