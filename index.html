@@ -93,27 +93,10 @@
       <h2>📁 Archivos Generados</h2>
       <p class="split-description">Archivos separados por: Proyecto (Jardín/Otros) → Nómina → TipoPago → Banco</p>
       
-      <!-- Payroll period selector for Banamex format -->
+      <!-- Payroll period display (calculated automatically) -->
       <div class="payroll-period">
-        <label>Periodo de Nómina (para Banamex):</label>
-        <select id="selectQuincena">
-          <option value="1a">1a Quincena</option>
-          <option value="2a">2a Quincena</option>
-        </select>
-        <select id="selectMes">
-          <option value="Ene">Enero</option>
-          <option value="Feb">Febrero</option>
-          <option value="Mar">Marzo</option>
-          <option value="Abr">Abril</option>
-          <option value="May">Mayo</option>
-          <option value="Jun">Junio</option>
-          <option value="Jul">Julio</option>
-          <option value="Ago">Agosto</option>
-          <option value="Sep">Septiembre</option>
-          <option value="Oct">Octubre</option>
-          <option value="Nov">Noviembre</option>
-          <option value="Dic">Diciembre</option>
-        </select>
+        <label>Periodo de Nómina (Banamex):</label>
+        <span id="payrollPeriodDisplay" class="period-display"></span>
       </div>
       
       <div id="splitTree" class="split-tree"></div>

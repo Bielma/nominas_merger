@@ -463,6 +463,28 @@ function isJardin(proyecto) {
 }
 
 /**
+ * Calculates the payroll period based on current date
+ * Returns { quincena: '1a' or '2a', mes: 'Ene', 'Feb', etc., display: '1a Nomina de Ene' }
+ */
+function getPayrollPeriod() {
+  const today = new Date();
+  const day = today.getDate();
+  const month = today.getMonth(); // 0-11
+  
+  const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const mes = monthNames[month];
+  
+  // First 15 days = 1a quincena, rest = 2a quincena
+  const quincena = day <= 15 ? '1a' : '2a';
+  
+  return {
+    quincena,
+    mes,
+    display: `${quincena} Nomina de ${mes}`
+  };
+}
+
+/**
  * Splits the merged data by Proyecto -> Nomina -> TipoPago -> Banco
  */
 function performSplit() {
@@ -519,6 +541,10 @@ function performSplit() {
 function displaySplitResults() {
   splitResultsSection.classList.remove('hidden');
   splitTree.innerHTML = '';
+  
+  // Display calculated payroll period
+  const payrollPeriod = getPayrollPeriod();
+  document.getElementById('payrollPeriodDisplay').textContent = payrollPeriod.display;
 
   const projectIcons = { 'JARDIN': '🌳', 'OTROS': '🏢' };
 
@@ -608,10 +634,9 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
 
   // Check if BANAMEX - use special format
   if (banco.toUpperCase() === 'BANAMEX') {
-    // Get payroll period from selectors
-    const quincena = document.getElementById('selectQuincena').value;
-    const mes = document.getElementById('selectMes').value;
-    const conceptoBancario = `${quincena} Nomina de ${mes}`;
+    // Get payroll period (calculated automatically)
+    const payrollPeriod = getPayrollPeriod();
+    const conceptoBancario = payrollPeriod.display;
     
     // Transform data to Banamex format
     const banamexData = rows.map((row, index) => ({
@@ -657,10 +682,9 @@ function downloadAllSplitFiles() {
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
   
-  // Get payroll period for Banamex files
-  const quincena = document.getElementById('selectQuincena').value;
-  const mes = document.getElementById('selectMes').value;
-  const conceptoBancario = `${quincena} Nomina de ${mes}`;
+  // Get payroll period (calculated automatically)
+  const payrollPeriod = getPayrollPeriod();
+  const conceptoBancario = payrollPeriod.display;
 
   for (const [project, nominas] of Object.entries(splitData)) {
     for (const [nomina, tipoPagos] of Object.entries(nominas)) {

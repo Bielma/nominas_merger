@@ -361,19 +361,14 @@ tbody tr:hover {
   color: #856404;
 }
 
-.payroll-period select {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 0.9rem;
+.payroll-period .period-display {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #856404;
   background: white;
-  cursor: pointer;
-}
-
-.payroll-period select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #ffc107;
 }
 
 .split-tree {
