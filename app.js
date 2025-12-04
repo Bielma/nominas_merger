@@ -13,7 +13,7 @@ let removals = [];      // Removed employees (bajas)
 
 // Expected columns (kept in Spanish to match Excel files)
 const COL_NEW = ['TIPOPAGO', 'NUE', 'NUP', 'RFC', 'CURP', 'NOMBRE', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
-const COL_BASE = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO'];
+const COL_BASE = ['NUM', 'NE', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO'];
 const COL_CASH = ['RFC', 'NOMBRE', 'MODALIDAD', 'MONTO', 'MOTIVO'];
 const COL_REMOVALS = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'MOTIVO'];
 const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
@@ -362,6 +362,7 @@ function performMerge() {
     
     mergedData.push({
       NUM: num++,
+      NE: rowBase ? rowBase.NE : '',
       NOMBRE: rowNew.NOMBRE || (rowBase ? rowBase.NOMBRE : ''),
       RFC: rfc,
       CURP: rowNew.CURP || '',
@@ -670,6 +671,24 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     ws['!cols'] = colWidths;
     
     fileName = `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+  } else if (banco.toUpperCase() === 'BANORTE') {
+    // Transform data to Banorte format
+    const banorteData = rows.map((row) => ({
+      'NO. EMPLEADO': row.NE || '',
+      'NOMBRE': row.NOMBRE || '',
+      'IMPORTE': row.LIQUIDO || 0,
+      'NO. BANCO RECEPTOR': '072',
+      'TIPO DE CUENTA': '01',
+      'CUENTA': row.CUENTA || ''
+    }));
+    
+    const banorteHeaders = ['NO. EMPLEADO', 'NOMBRE', 'IMPORTE', 'NO. BANCO RECEPTOR', 'TIPO DE CUENTA', 'CUENTA'];
+    ws = XLSX.utils.json_to_sheet(banorteData, { header: banorteHeaders });
+    
+    const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
+    ws['!cols'] = colWidths;
+    
+    fileName = `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
   } else {
     // Standard format for other banks
     ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
@@ -730,6 +749,24 @@ function downloadAllSplitFiles() {
             ws['!cols'] = colWidths;
             
             fileName = `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+          } else if (banco.toUpperCase() === 'BANORTE') {
+            // Transform data to Banorte format
+            const banorteData = rows.map((row) => ({
+              'NO. EMPLEADO': row.NE || '',
+              'NOMBRE': row.NOMBRE || '',
+              'IMPORTE': row.LIQUIDO || 0,
+              'NO. BANCO RECEPTOR': '072',
+              'TIPO DE CUENTA': '01',
+              'CUENTA': row.CUENTA || ''
+            }));
+            
+            const banorteHeaders = ['NO. EMPLEADO', 'NOMBRE', 'IMPORTE', 'NO. BANCO RECEPTOR', 'TIPO DE CUENTA', 'CUENTA'];
+            ws = XLSX.utils.json_to_sheet(banorteData, { header: banorteHeaders });
+            
+            const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
+            ws['!cols'] = colWidths;
+            
+            fileName = `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
           } else {
             // Standard format for other banks
             ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
