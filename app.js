@@ -13,7 +13,7 @@ let removals = [];      // Removed employees (bajas)
 
 // Expected columns (kept in Spanish to match Excel files)
 const COL_NEW = ['TIPOPAGO', 'NUE', 'NUP', 'RFC', 'CURP', 'NOMBRE', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
-const COL_BASE = ['NUM', 'NE', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO'];
+const COL_BASE = ['NUM', 'NE', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'OBSERVACIONES'];
 const COL_CASH = ['RFC', 'NOMBRE', 'MODALIDAD', 'MONTO', 'MOTIVO'];
 const COL_REMOVALS = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'MOTIVO'];
 const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
@@ -371,6 +371,7 @@ function performMerge() {
       TELEFONO: rowBase ? rowBase.TELEFONO : '',
       'CORREO ELECTRONICO': rowBase ? rowBase['CORREO ELECTRONICO'] : '',
       'SE ENVIA SOBRE A': rowBase ? rowBase['SE ENVIA SOBRE A'] : '',
+      OBSERVACIONES: rowBase ? rowBase.OBSERVACIONES : '',
       TIPOPAGO: rowNew.TIPOPAGO || '',
       CATEGORIA: rowNew.CATEGORIA || '',
       PUESTO: rowNew.PUESTO || '',
