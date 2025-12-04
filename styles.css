@@ -20,6 +20,109 @@ body {
   padding: 2rem;
 }
 
+/* Main Menu Styles */
+.main-menu {
+  text-align: center;
+}
+
+.main-menu.hidden {
+  display: none;
+}
+
+.menu-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.menu-option {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-align: center;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.menu-option:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+}
+
+.menu-option:nth-child(2) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 10px 30px rgba(245, 87, 108, 0.3);
+}
+
+.menu-option:nth-child(2):hover {
+  box-shadow: 0 15px 40px rgba(245, 87, 108, 0.4);
+}
+
+.menu-icon {
+  font-size: 4rem;
+  display: block;
+}
+
+.menu-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  display: block;
+}
+
+.menu-description {
+  font-size: 1rem;
+  opacity: 0.9;
+  display: block;
+}
+
+/* Section Content Styles */
+.section-content {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.section-content.hidden {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-header {
+  margin-bottom: 2rem;
+}
+
+.btn-back {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  transition: background 0.2s;
+}
+
+.btn-back:hover {
+  background: #5a6268;
+}
+
 h1 {
   text-align: center;
   color: #333;

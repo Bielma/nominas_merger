@@ -27,7 +27,15 @@ const MAX_HEADER_SEARCH_ROWS = 20; // Search headers in first 20 rows
 // Project code for Jardin (can be changed if needed)
 const JARDIN_PROJECT = '1170141530100000200';
 
-// DOM Elements
+// DOM Elements - Main Menu
+const mainMenu = document.getElementById('mainMenu');
+const nominasSection = document.getElementById('nominasSection');
+const pensionesSection = document.getElementById('pensionesSection');
+const menuOptions = document.querySelectorAll('.menu-option');
+const btnBackNominas = document.getElementById('btnBackNominas');
+const btnBackPensiones = document.getElementById('btnBackPensiones');
+
+// DOM Elements - Nominas
 const fileNewInput = document.getElementById('fileNuevo');
 const fileBaseInput = document.getElementById('fileBase');
 const fileCashInput = document.getElementById('fileCash');
@@ -56,7 +64,61 @@ const tableRemovals = document.getElementById('tableBajas');
 const tableFinal = document.getElementById('tableFinal');
 
 // ===============================
-// Event Listeners
+// Navigation Functions
+// ===============================
+
+/**
+ * Shows a specific section and hides others
+ */
+function showSection(sectionName) {
+	// Hide all sections
+	mainMenu.classList.add('hidden');
+	nominasSection.classList.add('hidden');
+	pensionesSection.classList.add('hidden');
+	
+	// Show selected section
+	if (sectionName === 'nominas') {
+		nominasSection.classList.remove('hidden');
+	} else if (sectionName === 'pensiones') {
+		pensionesSection.classList.remove('hidden');
+	} else {
+		mainMenu.classList.remove('hidden');
+	}
+}
+
+/**
+ * Returns to main menu
+ */
+function showMainMenu() {
+	mainMenu.classList.remove('hidden');
+	nominasSection.classList.add('hidden');
+	pensionesSection.classList.add('hidden');
+}
+
+// ===============================
+// Event Listeners - Navigation
+// ===============================
+
+// Menu option clicks
+if (menuOptions.length > 0) {
+	menuOptions.forEach(option => {
+		option.addEventListener('click', (e) => {
+			const section = e.currentTarget.dataset.section;
+			showSection(section);
+		});
+	});
+}
+
+// Back buttons
+if (btnBackNominas) {
+	btnBackNominas.addEventListener('click', showMainMenu);
+}
+if (btnBackPensiones) {
+	btnBackPensiones.addEventListener('click', showMainMenu);
+}
+
+// ===============================
+// Event Listeners - Nominas
 // ===============================
 
 fileNewInput.addEventListener('change', (e) => {

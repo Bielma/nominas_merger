@@ -8,10 +8,33 @@
 </head>
 <body>
   <div class="container">
-    <h1>🗂️Nóminas</h1>
-    <p class="subtitle">Compara el Excel nuevo (quincenal) con el Excel base y genera un archivo fusionado.</p>
+    <!-- Main Menu -->
+    <div id="mainMenu" class="main-menu">
+      <h1>🏢 Sistema de Nóminas y Pensiones</h1>
+      <p class="subtitle">Selecciona el módulo que deseas utilizar</p>
+      <div class="menu-options">
+        <button class="menu-option" data-section="nominas">
+          <span class="menu-icon">🗂️</span>
+          <span class="menu-title">Nóminas</span>
+          <span class="menu-description">Compara y fusiona archivos de nóminas</span>
+        </button>
+        <button class="menu-option" data-section="pensiones">
+          <span class="menu-icon">💰</span>
+          <span class="menu-title">Pensiones</span>
+          <span class="menu-description">Gestiona archivos de pensiones</span>
+        </button>
+      </div>
+    </div>
 
-    <div class="upload-section">
+    <!-- Nominas Section -->
+    <div id="nominasSection" class="section-content hidden">
+      <div class="section-header">
+        <button class="btn-back" id="btnBackNominas">← Volver al Menú</button>
+        <h1>🗂️ Nóminas</h1>
+        <p class="subtitle">Compara el Excel nuevo (quincenal) con el Excel base y genera un archivo fusionado.</p>
+      </div>
+
+      <div class="upload-section">
       <div class="upload-box">
         <label for="fileNuevo">📄 Excel Nuevo (Quincenal)</label>
         <input type="file" id="fileNuevo" accept=".xlsx,.xls">
@@ -95,12 +118,28 @@
       
       <!-- Payroll period display (calculated automatically) -->
       <div class="payroll-period">
-        <label>Periodo de Nómina (Banamex):</label>
+        <label>Periodo de Nómina:</label>
         <span id="payrollPeriodDisplay" class="period-display"></span>
       </div>
       
       <div id="splitTree" class="split-tree"></div>
       <button id="btnDownloadAll" class="btn-success">⬇️ Descargar Todos los Archivos</button>
+    </div>
+    </div>
+
+    <!-- Pensiones Section -->
+    <div id="pensionesSection" class="section-content hidden">
+      <div class="section-header">
+        <button class="btn-back" id="btnBackPensiones">← Volver al Menú</button>
+        <h1>💰 Pensiones</h1>
+        <p class="subtitle">Gestiona y procesa archivos de pensiones.</p>
+      </div>
+      
+      <div class="pensiones-content">
+        <p style="text-align: center; color: #666; padding: 2rem;">
+          Módulo de Pensiones - En desarrollo
+        </p>
+      </div>
     </div>
   </div>
 
