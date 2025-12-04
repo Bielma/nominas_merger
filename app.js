@@ -185,14 +185,36 @@ function readExcel(file, type) {
         range: headerRow 
       });
 
+      // Normalize data
+      let normalizedData;
+      let fileTypeName;
       if (type === 'new') {
-        newData = normalizeData(jsonData);
+        normalizedData = normalizeData(jsonData);
+        fileTypeName = 'Nuevo';
+      } else if (type === 'cash') {
+        normalizedData = normalizeData(jsonData);
+        fileTypeName = 'Efectivo';
+      } else {
+        normalizedData = normalizeData(jsonData);
+        fileTypeName = 'Base';
+      }
+
+      // Validate required columns (warning only, don't block processing)
+      const missingCols = validateRequiredColumns(normalizedData, type);
+      if (missingCols) {
+        const missingColsStr = missingCols.join(', ');
+        alert(`⚠️ ADVERTENCIA: El archivo ${fileTypeName} no contiene todos los campos requeridos.\n\nCampos faltantes:\n${missingColsStr}\n\nPuedes continuar, pero algunos procesos podrían no funcionar correctamente.`);
+      }
+
+      // Assign to global variables
+      if (type === 'new') {
+        newData = normalizedData;
         console.log('New Excel loaded:', newData.length, 'rows');
       } else if (type === 'cash') {
-        cashData = normalizeData(jsonData);
+        cashData = normalizedData;
         console.log('Cash Excel loaded:', cashData.length, 'rows');
       } else {
-        baseData = normalizeData(jsonData);
+        baseData = normalizedData;
         console.log('Base Excel loaded:', baseData.length, 'rows');
       }
 
@@ -217,6 +239,42 @@ function normalizeData(data) {
     }
     return normalized;
   });
+}
+
+/**
+ * Validates that the data contains all required columns
+ * @param {Array} data - Normalized data array
+ * @param {string} type - Type of file: 'new', 'base', or 'cash'
+ * @returns {Array|null} - Array of missing columns or null if all are present
+ */
+function validateRequiredColumns(data, type) {
+  if (!data || data.length === 0) {
+    return null; // Empty data, validation will happen elsewhere
+  }
+
+  // Get expected columns based on type
+  let expectedCols;
+  let fileTypeName;
+  if (type === 'new') {
+    expectedCols = COL_NEW;
+    fileTypeName = 'Nuevo';
+  } else if (type === 'base') {
+    expectedCols = COL_BASE;
+    fileTypeName = 'Base';
+  } else if (type === 'cash') {
+    expectedCols = COL_CASH;
+    fileTypeName = 'Efectivo';
+  } else {
+    return null;
+  }
+
+  // Get all available keys from the first row (all rows should have same structure after normalization)
+  const availableKeys = new Set(Object.keys(data[0]));
+
+  // Find missing columns
+  const missingCols = expectedCols.filter(col => !availableKeys.has(col));
+
+  return missingCols.length > 0 ? missingCols : null;
 }
 
 /**
