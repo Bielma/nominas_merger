@@ -752,6 +752,24 @@ function displaySplitResults() {
 }
 
 /**
+ * Determines account type for Banamex based on account number length
+ * @param {string} cuenta - Account number
+ * @returns {string} - 'Tarjeta' if 16 digits, 'Cheque' if 9 or 12 digits
+ */
+function getBanamexAccountType(cuenta) {
+	const cuentaStr = String(cuenta || '').trim();
+	// Remove all non-digit characters to count only digits
+	const digitsOnly = cuentaStr.replace(/\D/g, '');
+	const digitCount = digitsOnly.length;
+	
+	if (digitCount === 16) {
+		return 'Tarjeta';
+	} else {
+		return 'Cheque';
+	}		
+}
+
+/**
  * Downloads a single split file
  * For BANAMEX: special format with specific columns
  */
@@ -777,7 +795,7 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     
     // Transform data to Banamex format
     const banamexData = rows.map((row, index) => ({
-      'Tipo de Cuenta': 'Tarjeta',
+      'Tipo de Cuenta': getBanamexAccountType(row.CUENTA),
       'Cuenta': row.CUENTA || '',
       'Importe': row.LIQUIDO || 0,
       'Nombre/Razón Social': row.NOMBRE || '',
@@ -855,7 +873,7 @@ function downloadAllSplitFiles() {
           if (banco.toUpperCase() === 'BANAMEX') {
             // Transform data to Banamex format
             const banamexData = rows.map((row, index) => ({
-              'Tipo de Cuenta': 'Tarjeta',
+              'Tipo de Cuenta': getBanamexAccountType(row.CUENTA),
               'Cuenta': row.CUENTA || '',
               'Importe': row.LIQUIDO || 0,
               'Nombre/Razón Social': row.NOMBRE || '',
