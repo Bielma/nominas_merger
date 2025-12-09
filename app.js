@@ -27,6 +27,9 @@ const MAX_HEADER_SEARCH_ROWS = 20; // Search headers in first 20 rows
 // Project code for Jardin (can be changed if needed)
 const JARDIN_PROJECT = '1170141530100000200';
 
+// Flag to control split by project (Jardin vs Otros)
+const SPLIT_BY_PROJECT = false;
+
 // DOM Elements - Main Menu
 const mainMenu = document.getElementById('mainMenu');
 const nominasSection = document.getElementById('nominasSection');
@@ -623,6 +626,7 @@ function getPayrollPeriod() {
 
 /**
  * Splits the merged data by Proyecto -> Nomina -> TipoPago -> Banco
+ * or by Nomina -> TipoPago -> Banco (if SPLIT_BY_PROJECT is false)
  */
 function performSplit() {
   if (!mergedData || mergedData.length === 0) {
@@ -631,10 +635,14 @@ function performSplit() {
   }
 
   // Initialize split structure
-  splitData = {
-    'JARDIN': {},
-    'OTROS': {}
-  };
+  if (SPLIT_BY_PROJECT) {
+    splitData = {
+      'JARDIN': {},
+      'OTROS': {}
+    };
+  } else {
+    splitData = {};
+  }
 
   // Group data hierarchically
   mergedData.forEach(row => {
@@ -645,8 +653,11 @@ function performSplit() {
       return;
     }
     
-    // Level 1: Proyecto (Jardin vs Otros)
-    const projectGroup = isJardin(row.PROYECTO) ? 'JARDIN' : 'OTROS';
+    // Level 1: Proyecto (Jardin vs Otros) - only if flag is enabled
+    let projectGroup = null;
+    if (SPLIT_BY_PROJECT) {
+      projectGroup = isJardin(row.PROYECTO) ? 'JARDIN' : 'OTROS';
+    }
     
     // Level 2: Nomina
     const nomina = (row.NOMINA || 'SIN_NOMINA').toUpperCase().trim();
@@ -655,17 +666,29 @@ function performSplit() {
     const tipoPago = (row.TIPOPAGO || 'SIN_TIPOPAGO').toUpperCase().trim();
 
     // Initialize nested structure if needed
-    if (!splitData[projectGroup][nomina]) {
-      splitData[projectGroup][nomina] = {};
+    if (SPLIT_BY_PROJECT) {
+      if (!splitData[projectGroup][nomina]) {
+        splitData[projectGroup][nomina] = {};
+      }
+      if (!splitData[projectGroup][nomina][tipoPago]) {
+        splitData[projectGroup][nomina][tipoPago] = {};
+      }
+      if (!splitData[projectGroup][nomina][tipoPago][banco]) {
+        splitData[projectGroup][nomina][tipoPago][banco] = [];
+      }
+      splitData[projectGroup][nomina][tipoPago][banco].push(row);
+    } else {
+      if (!splitData[nomina]) {
+        splitData[nomina] = {};
+      }
+      if (!splitData[nomina][tipoPago]) {
+        splitData[nomina][tipoPago] = {};
+      }
+      if (!splitData[nomina][tipoPago][banco]) {
+        splitData[nomina][tipoPago][banco] = [];
+      }
+      splitData[nomina][tipoPago][banco].push(row);
     }
-    if (!splitData[projectGroup][nomina][tipoPago]) {
-      splitData[projectGroup][nomina][tipoPago] = {};
-    }
-    if (!splitData[projectGroup][nomina][tipoPago][banco]) {
-      splitData[projectGroup][nomina][tipoPago][banco] = [];
-    }
-
-    splitData[projectGroup][nomina][tipoPago][banco].push(row);
   });
 
   // Display results
@@ -682,22 +705,76 @@ function displaySplitResults() {
   // Display calculated payroll period
   const payrollPeriod = getPayrollPeriod();
   document.getElementById('payrollPeriodDisplay').textContent = payrollPeriod.display;
+  
+  // Update split description based on flag
+  const splitDescription = document.getElementById('splitDescription');
+  if (SPLIT_BY_PROJECT) {
+    splitDescription.textContent = 'Archivos separados por: Proyecto (Jardín/Otros) → Nómina → TipoPago → Banco';
+  } else {
+    splitDescription.textContent = 'Archivos separados por: Nómina → TipoPago → Banco';
+  }
 
   const projectIcons = { 'JARDIN': '🌳', 'OTROS': '🏢' };
 
-  for (const [projectGroup, nominas] of Object.entries(splitData)) {
-    // Skip empty project groups
-    if (Object.keys(nominas).length === 0) continue;
+  if (SPLIT_BY_PROJECT) {
+    // Structure: Proyecto -> Nomina -> TipoPago -> Banco
+    for (const [projectGroup, nominas] of Object.entries(splitData)) {
+      // Skip empty project groups
+      if (Object.keys(nominas).length === 0) continue;
 
-    const projectDiv = document.createElement('div');
-    projectDiv.className = 'split-project';
+      const projectDiv = document.createElement('div');
+      projectDiv.className = 'split-project';
 
-    const projectName = document.createElement('div');
-    projectName.className = 'split-project-name';
-    projectName.innerHTML = `${projectIcons[projectGroup] || '📁'} ${projectGroup}`;
-    projectDiv.appendChild(projectName);
+      const projectName = document.createElement('div');
+      projectName.className = 'split-project-name';
+      projectName.innerHTML = `${projectIcons[projectGroup] || '📁'} ${projectGroup}`;
+      projectDiv.appendChild(projectName);
 
-    for (const [nomina, tipoPagos] of Object.entries(nominas)) {
+      for (const [nomina, tipoPagos] of Object.entries(nominas)) {
+        const nominaDiv = document.createElement('div');
+        nominaDiv.className = 'split-nomina';
+
+        const nominaName = document.createElement('div');
+        nominaName.className = 'split-nomina-name';
+        nominaName.textContent = `📋 ${nomina}`;
+        nominaDiv.appendChild(nominaName);
+
+        for (const [tipoPago, bancos] of Object.entries(tipoPagos)) {
+          const tipoPagoDiv = document.createElement('div');
+          tipoPagoDiv.className = 'split-tipopago-group';
+          
+          const tipoPagoName = document.createElement('div');
+          tipoPagoName.className = 'split-tipopago-name';
+          tipoPagoName.textContent = `💰 ${tipoPago}`;
+          tipoPagoDiv.appendChild(tipoPagoName);
+
+          for (const [banco, rows] of Object.entries(bancos)) {
+            const bancoDiv = document.createElement('div');
+            bancoDiv.className = 'split-banco';
+            
+            bancoDiv.innerHTML = `
+              <span>🏦 ${banco}</span>
+              <span class="count">${rows.length} registros</span>
+              <button class="btn-download-single" data-project="${projectGroup}" data-nomina="${nomina}" data-tipopago="${tipoPago}" data-banco="${banco}">⬇️</button>
+            `;
+            
+            tipoPagoDiv.appendChild(bancoDiv);
+          }
+
+          nominaDiv.appendChild(tipoPagoDiv);
+        }
+
+        projectDiv.appendChild(nominaDiv);
+      }
+
+      splitTree.appendChild(projectDiv);
+    }
+  } else {
+    // Structure: Nomina -> TipoPago -> Banco (no project level)
+    for (const [nomina, tipoPagos] of Object.entries(splitData)) {
+      // Skip empty nominas
+      if (Object.keys(tipoPagos).length === 0) continue;
+
       const nominaDiv = document.createElement('div');
       nominaDiv.className = 'split-nomina';
 
@@ -722,7 +799,7 @@ function displaySplitResults() {
           bancoDiv.innerHTML = `
             <span>🏦 ${banco}</span>
             <span class="count">${rows.length} registros</span>
-            <button class="btn-download-single" data-project="${projectGroup}" data-nomina="${nomina}" data-tipopago="${tipoPago}" data-banco="${banco}">⬇️</button>
+            <button class="btn-download-single" data-nomina="${nomina}" data-tipopago="${tipoPago}" data-banco="${banco}">⬇️</button>
           `;
           
           tipoPagoDiv.appendChild(bancoDiv);
@@ -731,16 +808,14 @@ function displaySplitResults() {
         nominaDiv.appendChild(tipoPagoDiv);
       }
 
-      projectDiv.appendChild(nominaDiv);
+      splitTree.appendChild(nominaDiv);
     }
-
-    splitTree.appendChild(projectDiv);
   }
 
   // Add click handlers for individual download buttons
   splitTree.querySelectorAll('.btn-download-single').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const project = e.target.dataset.project;
+      const project = e.target.dataset.project || null;
       const nomina = e.target.dataset.nomina;
       const tipoPago = e.target.dataset.tipopago;
       const banco = e.target.dataset.banco;
@@ -774,7 +849,13 @@ function getBanamexAccountType(cuenta) {
  * For BANAMEX: special format with specific columns
  */
 function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
-  const rows = splitData[project]?.[nomina]?.[tipoPago]?.[banco];
+  let rows;
+  if (SPLIT_BY_PROJECT) {
+    rows = splitData[project]?.[nomina]?.[tipoPago]?.[banco];
+  } else {
+    rows = splitData[nomina]?.[tipoPago]?.[banco];
+  }
+  
   if (!rows || rows.length === 0) {
     alert('No hay datos para este archivo');
     return;
@@ -809,7 +890,9 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
     ws['!cols'] = colWidths;
     
-    fileName = `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+    fileName = SPLIT_BY_PROJECT 
+      ? `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`
+      : `BANAMEX_${nomina}_${tipoPago}_${dateStr}.xlsx`;
   } else if (banco.toUpperCase() === 'BANORTE') {
     // Transform data to Banorte format
     const banorteData = rows.map((row) => ({
@@ -827,7 +910,9 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
     ws['!cols'] = colWidths;
     
-    fileName = `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+    fileName = SPLIT_BY_PROJECT 
+      ? `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`
+      : `BANORTE_${nomina}_${tipoPago}_${dateStr}.xlsx`;
   } else {
     // Standard format for other banks
     ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
@@ -835,7 +920,9 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
     ws['!cols'] = colWidths;
     
-    fileName = `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
+    fileName = SPLIT_BY_PROJECT 
+      ? `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`
+      : `${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
   }
 
   XLSX.utils.book_append_sheet(wb, ws, 'Datos');
@@ -859,8 +946,74 @@ function downloadAllSplitFiles() {
   const payrollPeriod = getPayrollPeriod();
   const conceptoBancario = payrollPeriod.display;
 
-  for (const [project, nominas] of Object.entries(splitData)) {
-    for (const [nomina, tipoPagos] of Object.entries(nominas)) {
+  if (SPLIT_BY_PROJECT) {
+    // Structure: Proyecto -> Nomina -> TipoPago -> Banco
+    for (const [project, nominas] of Object.entries(splitData)) {
+      for (const [nomina, tipoPagos] of Object.entries(nominas)) {
+        for (const [tipoPago, bancos] of Object.entries(tipoPagos)) {
+          for (const [banco, rows] of Object.entries(bancos)) {
+            if (rows.length === 0) continue;
+
+            const wb = XLSX.utils.book_new();
+            let ws;
+            let fileName;
+
+            // Check if BANAMEX - use special format
+            if (banco.toUpperCase() === 'BANAMEX') {
+              // Transform data to Banamex format
+              const banamexData = rows.map((row, index) => ({
+                'Tipo de Cuenta': getBanamexAccountType(row.CUENTA),
+                'Cuenta': row.CUENTA || '',
+                'Importe': row.LIQUIDO || 0,
+                'Nombre/Razón Social': row.NOMBRE || '',
+                'Ref. Num.': index + 1,
+                'Ref. AlfN.': conceptoBancario
+              }));
+              
+              const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
+              ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
+              
+              const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
+              ws['!cols'] = colWidths;
+              
+              fileName = `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+            } else if (banco.toUpperCase() === 'BANORTE') {
+              // Transform data to Banorte format
+              const banorteData = rows.map((row) => ({
+                'NO. EMPLEADO': row.NE || '',
+                'NOMBRE': row.NOMBRE || '',
+                'IMPORTE': row.LIQUIDO || 0,
+                'NO. BANCO RECEPTOR': '072',
+                'TIPO DE CUENTA': '01',
+                'CUENTA': row.CUENTA || ''
+              }));
+              
+              const banorteHeaders = ['NO. EMPLEADO', 'NOMBRE', 'IMPORTE', 'NO. BANCO RECEPTOR', 'TIPO DE CUENTA', 'CUENTA'];
+              ws = XLSX.utils.json_to_sheet(banorteData, { header: banorteHeaders });
+              
+              const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
+              ws['!cols'] = colWidths;
+              
+              fileName = `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+            } else {
+              // Standard format for other banks
+              ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
+              
+              const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
+              ws['!cols'] = colWidths;
+              
+              fileName = `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
+            }
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+            XLSX.writeFile(wb, fileName);
+          }
+        }
+      }
+    }
+  } else {
+    // Structure: Nomina -> TipoPago -> Banco (no project level)
+    for (const [nomina, tipoPagos] of Object.entries(splitData)) {
       for (const [tipoPago, bancos] of Object.entries(tipoPagos)) {
         for (const [banco, rows] of Object.entries(bancos)) {
           if (rows.length === 0) continue;
@@ -887,7 +1040,7 @@ function downloadAllSplitFiles() {
             const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
             ws['!cols'] = colWidths;
             
-            fileName = `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+            fileName = `BANAMEX_${nomina}_${tipoPago}_${dateStr}.xlsx`;
           } else if (banco.toUpperCase() === 'BANORTE') {
             // Transform data to Banorte format
             const banorteData = rows.map((row) => ({
@@ -905,7 +1058,7 @@ function downloadAllSplitFiles() {
             const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
             ws['!cols'] = colWidths;
             
-            fileName = `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+            fileName = `BANORTE_${nomina}_${tipoPago}_${dateStr}.xlsx`;
           } else {
             // Standard format for other banks
             ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
@@ -913,7 +1066,7 @@ function downloadAllSplitFiles() {
             const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
             ws['!cols'] = colWidths;
             
-            fileName = `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
+            fileName = `${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
           }
 
           XLSX.utils.book_append_sheet(wb, ws, 'Datos');
