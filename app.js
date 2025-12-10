@@ -696,6 +696,32 @@ function performSplit() {
 }
 
 /**
+ * Calculates the sum of LIQUIDO (payment amount) from an array of rows
+ * @param {Array} rows - Array of row objects
+ * @returns {number} - Sum of all LIQUIDO values
+ */
+function calculateTotalAmount(rows) {
+	return rows.reduce((total, row) => {
+		const liquido = parseFloat(row.LIQUIDO || 0);
+		return total + (isNaN(liquido) ? 0 : liquido);
+	}, 0);
+}
+
+/**
+ * Formats a number as Mexican peso currency
+ * @param {number} amount - Amount to format
+ * @returns {string} - Formatted currency string
+ */
+function formatCurrency(amount) {
+	return new Intl.NumberFormat('es-MX', {
+		style: 'currency',
+		currency: 'MXN',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	}).format(amount);
+}
+
+/**
  * Displays the split results in a tree structure
  */
 function displaySplitResults() {
@@ -752,9 +778,13 @@ function displaySplitResults() {
             const bancoDiv = document.createElement('div');
             bancoDiv.className = 'split-banco';
             
+            const totalAmount = calculateTotalAmount(rows);
+            const formattedAmount = formatCurrency(totalAmount);
+            
             bancoDiv.innerHTML = `
               <span>🏦 ${banco}</span>
               <span class="count">${rows.length} registros</span>
+              <span class="amount">${formattedAmount}</span>
               <button class="btn-download-single" data-project="${projectGroup}" data-nomina="${nomina}" data-tipopago="${tipoPago}" data-banco="${banco}">⬇️</button>
             `;
             
@@ -796,9 +826,13 @@ function displaySplitResults() {
           const bancoDiv = document.createElement('div');
           bancoDiv.className = 'split-banco';
           
+          const totalAmount = calculateTotalAmount(rows);
+          const formattedAmount = formatCurrency(totalAmount);
+          
           bancoDiv.innerHTML = `
             <span>🏦 ${banco}</span>
             <span class="count">${rows.length} registros</span>
+            <span class="amount">${formattedAmount}</span>
             <button class="btn-download-single" data-nomina="${nomina}" data-tipopago="${tipoPago}" data-banco="${banco}">⬇️</button>
           `;
           

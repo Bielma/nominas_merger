@@ -544,6 +544,15 @@ tbody tr:hover {
   font-size: 0.8rem;
 }
 
+.split-banco .amount {
+  background: #d4edda;
+  color: #155724;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .split-banco .btn-download-single {
   background: #667eea;
   color: white;
