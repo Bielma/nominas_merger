@@ -13,138 +13,24 @@
       <h1>🏢 Sistema de Nóminas y Pensiones</h1>
       <p class="subtitle">Selecciona el módulo que deseas utilizar</p>
       <div class="menu-options">
-        <button class="menu-option" data-section="nominas">
+        <a href="nominas.html" class="menu-option" style="text-decoration: none;">
           <span class="menu-icon">🗂️</span>
           <span class="menu-title">Nóminas</span>
           <span class="menu-description">Compara y fusiona archivos de nóminas</span>
-        </button>
-        <button class="menu-option" data-section="pensiones">
+        </a>
+        <a href="pensiones.html" class="menu-option" style="text-decoration: none;">
           <span class="menu-icon">💰</span>
           <span class="menu-title">Pensiones</span>
           <span class="menu-description">Gestiona archivos de pensiones</span>
-        </button>
+        </a>
       </div>
     </div>
 
-    <!-- Nominas Section -->
-    <div id="nominasSection" class="section-content hidden">
-      <div class="section-header">
-        <button class="btn-back" id="btnBackNominas">← Volver al Menú</button>
-        <h1>🗂️ Nóminas</h1>
-        <p class="subtitle">Compara el Excel nuevo (quincenal) con el Excel base y genera un archivo fusionado.</p>
-      </div>
-
-      <div class="upload-section">
-      <div class="upload-box">
-        <label for="fileNuevo">📄 Excel Nuevo (Quincenal)</label>
-        <input type="file" id="fileNuevo" accept=".xlsx,.xls">
-        <p class="file-name" id="fileNuevoName">Sin archivo</p>
-        <p class="hint">Columnas: TIPOPAGO, NUE, NUP, RFC, CURP, NOMBRE, CATEGORIA, PUESTO, PROYECTO, NOMINA, DESDE, HASTA, LIQUIDO</p>
-      </div>
-
-      <div class="upload-box">
-        <label for="fileBase">📋 Excel Base</label>
-        <input type="file" id="fileBase" accept=".xlsx,.xls">
-        <p class="file-name" id="fileBaseName">Sin archivo</p>
-        <p class="hint">Columnas: NUM, NOMBRE, RFC, CUENTA, BANCO, NE, TELEFONO, CORREO ELECTRONICO, SE ENVIA SOBRE A, OBSERVACIONES</p>
-      </div>
-
-      <div class="upload-box optional">
-        <label for="fileCash">💵 Excel Efectivo (Opcional)</label>
-        <input type="file" id="fileCash" accept=".xlsx,.xls">
-        <p class="file-name" id="fileCashName">Sin archivo</p>
-        <p class="hint">Columnas: RFC, NOMBRE, MODALIDAD, MONTO — Excluye estos de las altas</p>
-        <button type="button" id="btnClearCash" class="btn-clear hidden">✕ Quitar</button>
-      </div>
-    </div>
-
-    <button id="btnMerge" class="btn-primary" disabled>🔀 Comparar y Fusionar</button>
-
-    <div id="results" class="results hidden">
-      <div class="summary">
-        <div class="stat alta">
-          <span class="stat-num" id="countAltas">0</span>
-          <span class="stat-label">Altas</span>
-        </div>
-        <div class="stat baja">
-          <span class="stat-num" id="countBajas">0</span>
-          <span class="stat-label">Bajas</span>
-        </div>
-        <div class="stat total">
-          <span class="stat-num" id="countTotal">0</span>
-          <span class="stat-label">Total final</span>
-        </div>
-      </div>
-
-      <div class="tabs">
-        <button class="tab active" data-tab="altas">🟢 Altas</button>
-        <button class="tab" data-tab="bajas">🔴 Bajas</button>
-        <button class="tab" data-tab="final">📊 Resultado Final</button>
-      </div>
-
-      <div class="tab-content" id="tabAltas">
-        <table id="tableAltas">
-          <thead><tr></tr></thead>
-          <tbody></tbody>
-        </table>
-        <p class="empty-msg hidden">No hay altas en este periodo.</p>
-      </div>
-
-      <div class="tab-content hidden" id="tabBajas">
-        <table id="tableBajas">
-          <thead><tr></tr></thead>
-          <tbody></tbody>
-        </table>
-        <p class="empty-msg hidden">No hay bajas en este periodo.</p>
-      </div>
-
-      <div class="tab-content hidden" id="tabFinal">
-        <table id="tableFinal">
-          <thead><tr></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <div class="action-buttons">
-        <button id="btnDownload" class="btn-success">⬇️ Descargar Excel Fusionado</button>
-        <button id="btnSplit" class="btn-secondary">📂 Separar por Nómina/TipoPago/Banco</button>
-      </div>
-    </div>
-
-    <!-- Split Results Section -->
-    <div id="splitResults" class="split-results hidden">
-      <h2>📁 Archivos Generados</h2>
-      <p class="split-description" id="splitDescription">Archivos separados por: Nómina → TipoPago → Banco</p>
-      
-      <!-- Payroll period display (calculated automatically) -->
-      <div class="payroll-period">
-        <label>Periodo de Nómina:</label>
-        <span id="payrollPeriodDisplay" class="period-display"></span>
-      </div>
-      
-      <div id="splitTree" class="split-tree"></div>
-      <button id="btnDownloadAll" class="btn-success">⬇️ Descargar Todos los Archivos</button>
-    </div>
-    </div>
-
-    <!-- Pensiones Section -->
-    <div id="pensionesSection" class="section-content hidden">
-      <div class="section-header">
-        <button class="btn-back" id="btnBackPensiones">← Volver al Menú</button>
-        <h1>💰 Pensiones</h1>
-        <p class="subtitle">Gestiona y procesa archivos de pensiones.</p>
-      </div>
-      
-      <div class="pensiones-content">
-        <p style="text-align: center; color: #666; padding: 2rem;">
-          Módulo de Pensiones - En desarrollo
-        </p>
-      </div>
-    </div>
   </div>
 
   <!-- SheetJS from CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="utils.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

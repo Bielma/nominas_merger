@@ -22,7 +22,7 @@ const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO
 const REQUIRED_BASE_COLS = ['NOMBRE', 'RFC'];
 const REQUIRED_NEW_COLS = ['RFC', 'NOMBRE'];
 const REQUIRED_CASH_COLS = ['RFC', 'NOMBRE'];
-const MAX_HEADER_SEARCH_ROWS = 20; // Search headers in first 20 rows
+//const MAX_HEADER_SEARCH_ROWS = 20; // Search headers in first 20 rows
 
 // Project code for Jardin (can be changed if needed)
 const JARDIN_PROJECT = '1170141530100000200';
@@ -30,7 +30,7 @@ const JARDIN_PROJECT = '1170141530100000200';
 // Flag to control split by project (Jardin vs Otros)
 const SPLIT_BY_PROJECT = false;
 
-// DOM Elements - Main Menu
+// DOM Elements - Main Menu (optional, may not exist in nominas.html)
 const mainMenu = document.getElementById('mainMenu');
 const nominasSection = document.getElementById('nominasSection');
 const pensionesSection = document.getElementById('pensionesSection');
@@ -102,22 +102,28 @@ function showMainMenu() {
 // Event Listeners - Navigation
 // ===============================
 
-// Menu option clicks
+// Menu option clicks (only if menu exists)
 if (menuOptions.length > 0) {
 	menuOptions.forEach(option => {
 		option.addEventListener('click', (e) => {
 			const section = e.currentTarget.dataset.section;
-			showSection(section);
+			if (section) {
+				showSection(section);
+			}
 		});
 	});
 }
 
 // Back buttons
 if (btnBackNominas) {
-	btnBackNominas.addEventListener('click', showMainMenu);
+	btnBackNominas.addEventListener('click', () => {
+		window.location.href = 'index.html';
+	});
 }
 if (btnBackPensiones) {
-	btnBackPensiones.addEventListener('click', showMainMenu);
+	btnBackPensiones.addEventListener('click', () => {
+		window.location.href = 'index.html';
+	});
 }
 
 // ===============================
@@ -180,42 +186,7 @@ tabs.forEach(tab => {
 // Functions
 // ===============================
 
-/**
- * Finds the row index where headers are located by searching for required columns
- * @param {object} sheet - XLSX sheet object
- * @param {string[]} requiredCols - Array of column names that must be present
- * @returns {number} - 0-indexed row number where headers were found, or -1 if not found
- */
-function findHeaderRow(sheet, requiredCols) {
-  const range = XLSX.utils.decode_range(sheet['!ref']);
-  const maxRow = Math.min(range.e.r, MAX_HEADER_SEARCH_ROWS);
-  
-  for (let row = 0; row <= maxRow; row++) {
-    const rowValues = [];
-    
-    // Collect all cell values in this row
-    for (let col = range.s.c; col <= range.e.c; col++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-      const cell = sheet[cellAddress];
-      if (cell && cell.v !== undefined) {
-        const value = String(cell.v).trim().toUpperCase();
-        rowValues.push(value);
-      }
-    }
-    
-    // Check if all required columns are present in this row
-    const foundAll = requiredCols.every(reqCol => 
-      rowValues.some(val => val.includes(reqCol.toUpperCase()))
-    );
-    
-    if (foundAll) {
-      console.log(`Headers found at row ${row + 1} (0-indexed: ${row})`);
-      return row;
-    }
-  }
-  
-  return -1; // Not found
-}
+// findHeaderRow is now in utils.js
 
 /**
  * Reads an Excel file and converts it to an array of objects
@@ -250,17 +221,14 @@ function readExcel(file, type) {
         range: headerRow 
       });
 
-      // Normalize data
-      let normalizedData;
+      // Normalize data using utils function
+      const normalizedData = normalizeData(jsonData);
       let fileTypeName;
       if (type === 'new') {
-        normalizedData = normalizeData(jsonData);
         fileTypeName = 'Nuevo';
       } else if (type === 'cash') {
-        normalizedData = normalizeData(jsonData);
         fileTypeName = 'Efectivo';
       } else {
-        normalizedData = normalizeData(jsonData);
         fileTypeName = 'Base';
       }
 
@@ -292,19 +260,7 @@ function readExcel(file, type) {
   reader.readAsArrayBuffer(file);
 }
 
-/**
- * Normalizes object keys (trim and uppercase)
- */
-function normalizeData(data) {
-  return data.map(row => {
-    const normalized = {};
-    for (const key in row) {
-      const cleanKey = key.trim().toUpperCase();
-      normalized[cleanKey] = typeof row[key] === 'string' ? row[key].trim() : row[key];
-    }
-    return normalized;
-  });
-}
+// normalizeData is now in utils.js
 
 /**
  * Validates that the data contains all required columns
@@ -536,21 +492,7 @@ function displayResults() {
   resultsSection.scrollIntoView({ behavior: 'smooth' });
 }
 
-/**
- * Renders a table with the specified data and columns
- */
-function renderTable(table, data, columns) {
-  const thead = table.querySelector('thead tr');
-  const tbody = table.querySelector('tbody');
-
-  // Header
-  thead.innerHTML = columns.map(col => `<th>${col}</th>`).join('');
-
-  // Body
-  tbody.innerHTML = data.map(row => {
-    return '<tr>' + columns.map(col => `<td>${row[col] ?? ''}</td>`).join('') + '</tr>';
-  }).join('');
-}
+// renderTable is now in utils.js
 
 /**
  * Downloads the merged Excel file
@@ -695,31 +637,7 @@ function performSplit() {
   displaySplitResults();
 }
 
-/**
- * Calculates the sum of LIQUIDO (payment amount) from an array of rows
- * @param {Array} rows - Array of row objects
- * @returns {number} - Sum of all LIQUIDO values
- */
-function calculateTotalAmount(rows) {
-	return rows.reduce((total, row) => {
-		const liquido = parseFloat(row.LIQUIDO || 0);
-		return total + (isNaN(liquido) ? 0 : liquido);
-	}, 0);
-}
-
-/**
- * Formats a number as Mexican peso currency
- * @param {number} amount - Amount to format
- * @returns {string} - Formatted currency string
- */
-function formatCurrency(amount) {
-	return new Intl.NumberFormat('es-MX', {
-		style: 'currency',
-		currency: 'MXN',
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2
-	}).format(amount);
-}
+// calculateTotalAmount and formatCurrency are now in utils.js
 
 /**
  * Displays the split results in a tree structure
@@ -778,7 +696,7 @@ function displaySplitResults() {
             const bancoDiv = document.createElement('div');
             bancoDiv.className = 'split-banco';
             
-            const totalAmount = calculateTotalAmount(rows);
+            const totalAmount = calculateTotalAmount(rows, 'LIQUIDO');
             const formattedAmount = formatCurrency(totalAmount);
             
             bancoDiv.innerHTML = `
@@ -826,7 +744,7 @@ function displaySplitResults() {
           const bancoDiv = document.createElement('div');
           bancoDiv.className = 'split-banco';
           
-          const totalAmount = calculateTotalAmount(rows);
+          const totalAmount = calculateTotalAmount(rows, 'LIQUIDO');
           const formattedAmount = formatCurrency(totalAmount);
           
           bancoDiv.innerHTML = `
