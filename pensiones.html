@@ -17,27 +17,19 @@
 			</div>
 
 			<div class="upload-section">
-				<div class="upload-box">
-					<label for="fileQuincenal">📄 Excel Quincenal</label>
-					<input type="file" id="fileQuincenal" accept=".xlsx,.xls">
-					<p class="file-name" id="fileQuincenalName">Sin archivo</p>
-					<p class="hint">Columnas: PROYECTO, RFC, NOMBRE, BENEFICIARIO, FOLIO, IMPORTE, CVE, NOMINA, TOTAL DE DESCUENTOS</p>
-				</div>
+			<div class="upload-box">
+				<label for="fileQuincenal">📄 Excel Quincenal</label>
+				<input type="file" id="fileQuincenal" accept=".xlsx,.xls">
+				<p class="file-name" id="fileQuincenalName">Sin archivo</p>
+				<p class="hint">Columnas: PROYECTO, RFC, NOMBRE, BENEFICIARIO, FOLIO, IMPORTE, CVE, NOMINA, TOTAL DE DESCUENTOS, MODALIDAD</p>
+			</div>
 
-				<div class="upload-box">
-					<label for="fileBasePensiones">📋 Excel Base</label>
-					<input type="file" id="fileBasePensiones" accept=".xlsx,.xls">
-					<p class="file-name" id="fileBasePensionesName">Sin archivo</p>
-					<p class="hint">Columnas: No., NOMBRE, CUENTA, NE, BANCO</p>
-				</div>
-
-				<div class="upload-box optional">
-					<label for="fileModalidad">📊 Excel Modalidad (Opcional)</label>
-					<input type="file" id="fileModalidad" accept=".xlsx,.xls">
-					<p class="file-name" id="fileModalidadName">Sin archivo</p>
-					<p class="hint">Columnas: RFC, MODALIDAD o NOMINA — Para determinar modalidad por RFC</p>
-					<button type="button" id="btnClearModalidad" class="btn-clear hidden">✕ Quitar</button>
-				</div>
+			<div class="upload-box">
+				<label for="fileBasePensiones">📋 Excel Base</label>
+				<input type="file" id="fileBasePensiones" accept=".xlsx,.xls">
+				<p class="file-name" id="fileBasePensionesName">Sin archivo</p>
+				<p class="hint">Columnas: No., NOMBRE, CUENTA, NE, BANCO</p>
+			</div>
 			</div>
 
 			<button id="btnMergePensiones" class="btn-primary" disabled>🔀 Comparar y Fusionar</button>
