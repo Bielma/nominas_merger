@@ -12,8 +12,8 @@ let removalsPensiones = [];   // Removed beneficiaries (bajas)
 let efectivosData = [];       // Records without account (cash payments)
 
 // Expected columns
-const COL_QUINCENAL = ['PROYECTO', 'RFC', 'NOMBRE', 'BENEFICIARIO', 'FOLIO', 'IMPORTE', 'CVE', 'NOMINA', 'TOTAL DE DESCUENTOS', 'MODALIDAD'];
-const COL_BASE_PENSIONES = ['NO.', 'NOMBRE', 'CUENTA', 'NE', 'BANCO'];
+const COL_QUINCENAL = ['PROYECTO', 'RFC', 'NOMBRE', 'BENEFICIARIO', 'FOLIO', 'IMPORTE', 'CVE', 'NOMINA', 'TOTAL DE DESCUENTOS'];
+const COL_BASE_PENSIONES = ['NO.', 'NOMBRE', 'CUENTA', 'NE', 'BANCO', 'MODALIDAD'];
 const COL_REMOVALS_PENSIONES = ['NO.', 'NOMBRE', 'CUENTA', 'NE', 'BANCO', 'MOTIVO'];
 
 // Required columns to detect header row
@@ -85,14 +85,14 @@ fileQuincenalInput.addEventListener('change', (e) => {
 			}
 			quincenalData = data;
 			console.log('Quincenal Excel loaded:', quincenalData.length, 'rows');
-			
+
 			// Validate columns
 			const missingCols = validateRequiredColumns(quincenalData, COL_QUINCENAL);
 			if (missingCols) {
 				const missingColsStr = missingCols.join(', ');
 				alert(`⚠️ ADVERTENCIA: El archivo Quincenal no contiene todos los campos requeridos.\n\nCampos faltantes:\n${missingColsStr}\n\nPuedes continuar, pero algunos procesos podrían no funcionar correctamente.`);
 			}
-			
+
 			updateMergeButtonPensiones();
 		});
 	}
@@ -109,14 +109,14 @@ fileBasePensionesInput.addEventListener('change', (e) => {
 			}
 			basePensionesData = data;
 			console.log('Base Pensiones Excel loaded:', basePensionesData.length, 'rows');
-			
+
 			// Validate columns
 			const missingCols = validateRequiredColumns(basePensionesData, COL_BASE_PENSIONES);
 			if (missingCols) {
 				const missingColsStr = missingCols.join(', ');
 				alert(`⚠️ ADVERTENCIA: El archivo Base no contiene todos los campos requeridos.\n\nCampos faltantes:\n${missingColsStr}\n\nPuedes continuar, pero algunos procesos podrían no funcionar correctamente.`);
 			}
-			
+
 			updateMergeButtonPensiones();
 		});
 	}
@@ -169,13 +169,13 @@ function getPayrollPeriod() {
 	const today = new Date();
 	const day = today.getDate();
 	const month = today.getMonth(); // 0-11
-	
+
 	const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 	const mes = monthNames[month];
-	
+
 	// First 15 days = 1a quincena, rest = 2a quincena
 	const quincena = day <= 15 ? '1a' : '2a';
-	
+
 	return {
 		quincena,
 		mes,
@@ -193,7 +193,7 @@ function getBanamexAccountType(cuenta) {
 	// Remove all non-digit characters to count only digits
 	const digitsOnly = cuentaStr.replace(/\D/g, '');
 	const digitCount = digitsOnly.length;
-	
+
 	if (digitCount === 16) {
 		return 'Tarjeta';
 	} else {
@@ -217,7 +217,7 @@ function getModalidad(row) {
 		// If not found in MODALIDADES map, return the original value
 		return row.MODALIDAD;
 	}
-	
+
 	// Fallback: try NOMINA field
 	if (row.NOMINA) {
 		const nomina = String(row.NOMINA).toUpperCase().trim();
@@ -227,7 +227,7 @@ function getModalidad(row) {
 			}
 		}
 	}
-	
+
 	// Default
 	return 'Base';
 }
@@ -266,10 +266,10 @@ function performMergePensiones() {
 	quincenalData.forEach(rowQuincenal => {
 		const beneficiario = normalizeName(rowQuincenal.BENEFICIARIO);
 		if (!beneficiario || addedBeneficiarios.has(beneficiario)) return;
-		
+
 		const rowBase = nombreBase.get(beneficiario);
 		const isInBase = !!rowBase;
-		
+
 		if (!isInBase) {
 			additionsPensiones.push(rowQuincenal);
 			addedBeneficiarios.add(beneficiario);
@@ -302,10 +302,10 @@ function performMergePensiones() {
 	quincenalData.forEach(rowQuincenal => {
 		const beneficiario = normalizeName(rowQuincenal.BENEFICIARIO || '');
 		const rowBase = beneficiario ? nombreBase.get(beneficiario) : null;
-		
+
 		const cuenta = rowBase && rowBase.CUENTA ? String(rowBase.CUENTA).trim() : '';
 		const hasAccount = cuenta.length > 0;
-		
+
 		const mergedRow = {
 			'NO.': num++,
 			'NOMBRE': rowBase ? rowBase.NOMBRE : (rowQuincenal.NOMBRE || ''),
@@ -322,9 +322,9 @@ function performMergePensiones() {
 			'TOTAL DE DESCUENTOS': rowQuincenal['TOTAL DE DESCUENTOS'] || 0,
 			'MODALIDAD': getModalidad(rowQuincenal)
 		};
-		
+
 		mergedPensionesData.push(mergedRow);
-		
+
 		// If no account, add to efectivos
 		if (!hasAccount) {
 			efectivosData.push(mergedRow);
@@ -400,10 +400,10 @@ function performSplitPensiones() {
 			console.log('Split skipped (no bank):', row.NOMBRE);
 			return;
 		}
-		
+
 		// Level 1: Modalidad
 		const modalidad = (row.MODALIDAD || 'Base').toUpperCase().trim();
-		
+
 		// Initialize nested structure if needed
 		if (!splitPensionesData[modalidad]) {
 			splitPensionesData[modalidad] = {};
@@ -441,17 +441,17 @@ function displaySplitResultsPensiones() {
 		for (const [banco, rows] of Object.entries(bancos)) {
 			const bancoDiv = document.createElement('div');
 			bancoDiv.className = 'split-banco';
-			
+
 			const totalAmount = calculateTotalAmount(rows, 'IMPORTE');
 			const formattedAmount = formatCurrency(totalAmount);
-			
+
 			bancoDiv.innerHTML = `
 				<span>🏦 ${banco}</span>
 				<span class="count">${rows.length} registros</span>
 				<span class="amount">${formattedAmount}</span>
 				<button class="btn-download-single" data-modalidad="${modalidad}" data-banco="${banco}">⬇️</button>
 			`;
-			
+
 			modalidadDiv.appendChild(bancoDiv);
 		}
 
@@ -484,7 +484,7 @@ function downloadSingleSplitPensionesFile(modalidad, banco) {
 	const wb = XLSX.utils.book_new();
 	let ws;
 	let fileName;
-	
+
 	const today = new Date();
 	const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
 
@@ -493,7 +493,7 @@ function downloadSingleSplitPensionesFile(modalidad, banco) {
 		// Get payroll period (calculated automatically)
 		const payrollPeriod = getPayrollPeriod();
 		const conceptoBancario = payrollPeriod.display;
-		
+
 		// Transform data to Banamex format
 		const banamexData = rows.map((row, index) => ({
 			'Tipo de Cuenta': getBanamexAccountType(row.CUENTA),
@@ -503,13 +503,13 @@ function downloadSingleSplitPensionesFile(modalidad, banco) {
 			'Ref. Num.': index + 1,
 			'Ref. AlfN.': conceptoBancario
 		}));
-		
+
 		const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
 		ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
-		
+
 		const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
 		ws['!cols'] = colWidths;
-		
+
 		fileName = `BANAMEX_${modalidad}_${dateStr}.xlsx`;
 	} else if (banco.toUpperCase() === 'BANORTE') {
 		// Transform data to Banorte format
@@ -521,21 +521,21 @@ function downloadSingleSplitPensionesFile(modalidad, banco) {
 			'TIPO DE CUENTA': '01',
 			'CUENTA': row.CUENTA || ''
 		}));
-		
+
 		const banorteHeaders = ['NO. EMPLEADO', 'NOMBRE', 'IMPORTE', 'NO. BANCO RECEPTOR', 'TIPO DE CUENTA', 'CUENTA'];
 		ws = XLSX.utils.json_to_sheet(banorteData, { header: banorteHeaders });
-		
+
 		const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
 		ws['!cols'] = colWidths;
-		
+
 		fileName = `BANORTE_${modalidad}_${dateStr}.xlsx`;
 	} else {
 		// Standard format for other banks
 		ws = XLSX.utils.json_to_sheet(rows, { header: window.COL_MERGED_PENSIONES });
-		
+
 		const colWidths = window.COL_MERGED_PENSIONES.map(col => ({ wch: Math.max(col.length, 15) }));
 		ws['!cols'] = colWidths;
-		
+
 		fileName = `${modalidad}_${banco}_${dateStr}.xlsx`;
 	}
 
@@ -555,7 +555,7 @@ function downloadAllSplitPensionesFiles() {
 
 	const today = new Date();
 	const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-	
+
 	// Get payroll period (calculated automatically)
 	const payrollPeriod = getPayrollPeriod();
 	const conceptoBancario = payrollPeriod.display;
@@ -579,13 +579,13 @@ function downloadAllSplitPensionesFiles() {
 					'Ref. Num.': index + 1,
 					'Ref. AlfN.': conceptoBancario
 				}));
-				
+
 				const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
 				ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
-				
+
 				const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
 				ws['!cols'] = colWidths;
-				
+
 				fileName = `BANAMEX_${modalidad}_${dateStr}.xlsx`;
 			} else if (banco.toUpperCase() === 'BANORTE') {
 				// Transform data to Banorte format
@@ -597,21 +597,21 @@ function downloadAllSplitPensionesFiles() {
 					'TIPO DE CUENTA': '01',
 					'CUENTA': row.CUENTA || ''
 				}));
-				
+
 				const banorteHeaders = ['NO. EMPLEADO', 'NOMBRE', 'IMPORTE', 'NO. BANCO RECEPTOR', 'TIPO DE CUENTA', 'CUENTA'];
 				ws = XLSX.utils.json_to_sheet(banorteData, { header: banorteHeaders });
-				
+
 				const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
 				ws['!cols'] = colWidths;
-				
+
 				fileName = `BANORTE_${modalidad}_${dateStr}.xlsx`;
 			} else {
 				// Standard format for other banks
 				ws = XLSX.utils.json_to_sheet(rows, { header: window.COL_MERGED_PENSIONES });
-				
+
 				const colWidths = window.COL_MERGED_PENSIONES.map(col => ({ wch: Math.max(col.length, 15) }));
 				ws['!cols'] = colWidths;
-				
+
 				fileName = `${modalidad}_${banco}_${dateStr}.xlsx`;
 			}
 

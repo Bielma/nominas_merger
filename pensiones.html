@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Pensiones</title>
 	<link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 	<div class="container">
 		<!-- Pensiones Section -->
@@ -17,19 +19,20 @@
 			</div>
 
 			<div class="upload-section">
-			<div class="upload-box">
-				<label for="fileQuincenal">📄 Excel Quincenal</label>
-				<input type="file" id="fileQuincenal" accept=".xlsx,.xls">
-				<p class="file-name" id="fileQuincenalName">Sin archivo</p>
-				<p class="hint">Columnas: PROYECTO, RFC, NOMBRE, BENEFICIARIO, FOLIO, IMPORTE, CVE, NOMINA, TOTAL DE DESCUENTOS, MODALIDAD</p>
-			</div>
+				<div class="upload-box">
+					<label for="fileQuincenal">📄 Excel Quincenal</label>
+					<input type="file" id="fileQuincenal" accept=".xlsx,.xls">
+					<p class="file-name" id="fileQuincenalName">Sin archivo</p>
+					<p class="hint">Columnas: PROYECTO, RFC, NOMBRE, BENEFICIARIO, FOLIO, IMPORTE, CVE, NOMINA, TOTAL DE
+						DESCUENTOS</p>
+				</div>
 
-			<div class="upload-box">
-				<label for="fileBasePensiones">📋 Excel Base</label>
-				<input type="file" id="fileBasePensiones" accept=".xlsx,.xls">
-				<p class="file-name" id="fileBasePensionesName">Sin archivo</p>
-				<p class="hint">Columnas: No., NOMBRE, CUENTA, NE, BANCO</p>
-			</div>
+				<div class="upload-box">
+					<label for="fileBasePensiones">📋 Excel Base</label>
+					<input type="file" id="fileBasePensiones" accept=".xlsx,.xls">
+					<p class="file-name" id="fileBasePensionesName">Sin archivo</p>
+					<p class="hint">Columnas: No., NOMBRE, CUENTA, NE, BANCO</p>
+				</div>
 			</div>
 
 			<button id="btnMergePensiones" class="btn-primary" disabled>🔀 Comparar y Fusionar</button>
@@ -58,7 +61,9 @@
 
 				<div class="tab-content" id="tabAltasPensiones">
 					<table id="tableAltasPensiones">
-						<thead><tr></tr></thead>
+						<thead>
+							<tr></tr>
+						</thead>
 						<tbody></tbody>
 					</table>
 					<p class="empty-msg hidden">No hay altas en este periodo.</p>
@@ -66,7 +71,9 @@
 
 				<div class="tab-content hidden" id="tabBajasPensiones">
 					<table id="tableBajasPensiones">
-						<thead><tr></tr></thead>
+						<thead>
+							<tr></tr>
+						</thead>
 						<tbody></tbody>
 					</table>
 					<p class="empty-msg hidden">No hay bajas en este periodo.</p>
@@ -74,7 +81,9 @@
 
 				<div class="tab-content hidden" id="tabFinalPensiones">
 					<table id="tableFinalPensiones">
-						<thead><tr></tr></thead>
+						<thead>
+							<tr></tr>
+						</thead>
 						<tbody></tbody>
 					</table>
 				</div>
@@ -88,8 +97,9 @@
 			<!-- Split Results Section -->
 			<div id="splitResultsPensiones" class="split-results hidden">
 				<h2>📁 Archivos Generados</h2>
-				<p class="split-description" id="splitDescriptionPensiones">Archivos separados por: Modalidad → Banco</p>
-				
+				<p class="split-description" id="splitDescriptionPensiones">Archivos separados por: Modalidad → Banco
+				</p>
+
 				<div id="splitTreePensiones" class="split-tree"></div>
 				<button id="btnDownloadAllPensiones" class="btn-success">⬇️ Descargar Todos los Archivos</button>
 				<button id="btnDownloadEfectivos" class="btn-secondary">💵 Descargar Efectivos</button>
@@ -102,5 +112,5 @@
 	<script src="utils.js"></script>
 	<script src="pensiones.js"></script>
 </body>
-</html>
 
+</html>
