@@ -25,7 +25,7 @@ const MODALIDADES = {
 	'BASE': 'Base',
 	'CONTRATO CONFIANZA': 'Contrato confianza',
 	'MANDOS MEDIOS': 'Mandos medios',
-	'NOMBRAMIENTO CONFIANZA': 'Nombramiento confianza'
+	'CONFIANZA': 'Confianza'
 };
 
 // DOM Elements
@@ -202,12 +202,12 @@ function getBanamexAccountType(cuenta) {
 }
 
 /**
- * Gets modalidad from row (MODALIDAD field comes directly from quincenal file)
+ * Gets modalidad from row (MODALIDAD field comes from base file)
  */
-function getModalidad(row) {
-	// Get MODALIDAD directly from quincenal data
-	if (row.MODALIDAD) {
-		const modalidad = String(row.MODALIDAD).toUpperCase().trim();
+function getModalidad(rowBase) {
+	// Get MODALIDAD from base data
+	if (rowBase && rowBase.MODALIDAD) {
+		const modalidad = String(rowBase.MODALIDAD).toUpperCase().trim();
 		// Normalize modalidad name
 		for (const [key, value] of Object.entries(MODALIDADES)) {
 			if (modalidad.includes(key) || modalidad === key) {
@@ -215,17 +215,7 @@ function getModalidad(row) {
 			}
 		}
 		// If not found in MODALIDADES map, return the original value
-		return row.MODALIDAD;
-	}
-
-	// Fallback: try NOMINA field
-	if (row.NOMINA) {
-		const nomina = String(row.NOMINA).toUpperCase().trim();
-		for (const [key, value] of Object.entries(MODALIDADES)) {
-			if (nomina.includes(key) || nomina === key) {
-				return value;
-			}
-		}
+		return rowBase.MODALIDAD;
 	}
 
 	// Default
@@ -320,7 +310,7 @@ function performMergePensiones() {
 			'CVE': rowQuincenal.CVE || '',
 			'NOMINA': rowQuincenal.NOMINA || '',
 			'TOTAL DE DESCUENTOS': rowQuincenal['TOTAL DE DESCUENTOS'] || 0,
-			'MODALIDAD': getModalidad(rowQuincenal)
+			'MODALIDAD': getModalidad(rowBase)
 		};
 
 		mergedPensionesData.push(mergedRow);
