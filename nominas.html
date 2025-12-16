@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Nóminas</title>
 	<link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 	<div class="container">
 		<!-- Nominas Section -->
@@ -13,7 +15,8 @@
 			<div class="section-header">
 				<button class="btn-back" id="btnBackNominas">← Volver al Menú</button>
 				<h1>🗂️ Nóminas</h1>
-				<p class="subtitle">Compara el Excel nuevo (quincenal) con el Excel base y genera un archivo fusionado.</p>
+				<p class="subtitle">Compara el Excel nuevo (quincenal) con el Excel base y genera un archivo fusionado.
+				</p>
 			</div>
 
 			<div class="upload-section">
@@ -21,23 +24,18 @@
 					<label for="fileNuevo">📄 Excel Nuevo (Quincenal)</label>
 					<input type="file" id="fileNuevo" accept=".xlsx,.xls">
 					<p class="file-name" id="fileNuevoName">Sin archivo</p>
-					<p class="hint">Columnas: TIPOPAGO, NUE, NUP, RFC, CURP, NOMBRE, CATEGORIA, PUESTO, PROYECTO, NOMINA, DESDE, HASTA, LIQUIDO</p>
+					<p class="hint">Columnas: TIPOPAGO, NUE, NUP, RFC, CURP, NOMBRE, CATEGORIA, PUESTO, PROYECTO,
+						NOMINA, DESDE, HASTA, LIQUIDO</p>
 				</div>
 
 				<div class="upload-box">
 					<label for="fileBase">📋 Excel Base</label>
 					<input type="file" id="fileBase" accept=".xlsx,.xls">
 					<p class="file-name" id="fileBaseName">Sin archivo</p>
-					<p class="hint">Columnas: NUM, NOMBRE, RFC, CUENTA, BANCO, NE, TELEFONO, CORREO ELECTRONICO, SE ENVIA SOBRE A, OBSERVACIONES</p>
+					<p class="hint">Columnas: NUM, NOMBRE, RFC, CUENTA, BANCO, NE, TELEFONO, CORREO ELECTRONICO, SE
+						ENVIA SOBRE A, OBSERVACIONES</p>
 				</div>
 
-				<div class="upload-box optional">
-					<label for="fileCash">💵 Excel Efectivo (Opcional)</label>
-					<input type="file" id="fileCash" accept=".xlsx,.xls">
-					<p class="file-name" id="fileCashName">Sin archivo</p>
-					<p class="hint">Columnas: RFC, NOMBRE, MODALIDAD, MONTO — Excluye estos de las altas</p>
-					<button type="button" id="btnClearCash" class="btn-clear hidden">✕ Quitar</button>
-				</div>
 			</div>
 
 			<button id="btnMerge" class="btn-primary" disabled>🔀 Comparar y Fusionar</button>
@@ -66,7 +64,9 @@
 
 				<div class="tab-content" id="tabAltas">
 					<table id="tableAltas">
-						<thead><tr></tr></thead>
+						<thead>
+							<tr></tr>
+						</thead>
 						<tbody></tbody>
 					</table>
 					<p class="empty-msg hidden">No hay altas en este periodo.</p>
@@ -74,7 +74,9 @@
 
 				<div class="tab-content hidden" id="tabBajas">
 					<table id="tableBajas">
-						<thead><tr></tr></thead>
+						<thead>
+							<tr></tr>
+						</thead>
 						<tbody></tbody>
 					</table>
 					<p class="empty-msg hidden">No hay bajas en este periodo.</p>
@@ -82,7 +84,9 @@
 
 				<div class="tab-content hidden" id="tabFinal">
 					<table id="tableFinal">
-						<thead><tr></tr></thead>
+						<thead>
+							<tr></tr>
+						</thead>
 						<tbody></tbody>
 					</table>
 				</div>
@@ -97,15 +101,18 @@
 			<div id="splitResults" class="split-results hidden">
 				<h2>📁 Archivos Generados</h2>
 				<p class="split-description" id="splitDescription">Archivos separados por: Nómina → TipoPago → Banco</p>
-				
+
 				<!-- Payroll period display (calculated automatically) -->
 				<div class="payroll-period">
 					<label>Periodo de Nómina:</label>
 					<span id="payrollPeriodDisplay" class="period-display"></span>
 				</div>
-				
+
 				<div id="splitTree" class="split-tree"></div>
-				<button id="btnDownloadAll" class="btn-success">⬇️ Descargar Todos los Archivos</button>
+				<div class="action-buttons">
+					<button id="btnDownloadAll" class="btn-success">⬇️ Descargar Todos los Archivos</button>
+					<button id="btnDownloadEfectivosNominas" class="btn-secondary">💵 Descargar Efectivos</button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -115,5 +122,5 @@
 	<script src="utils.js"></script>
 	<script src="app.js"></script>
 </body>
-</html>
 
+</html>

@@ -6,22 +6,21 @@
 // Global state
 let newData = null;     // Array of objects from new Excel
 let baseData = null;    // Array of objects from base Excel
-let cashData = null;    // Array of objects from cash payments Excel (optional)
 let mergedData = null;  // Merge result
 let additions = [];     // New employees (altas)
 let removals = [];      // Removed employees (bajas)
+let efectivosData = [];  // Records without account (cash payments)
 
 // Expected columns (kept in Spanish to match Excel files)
 const COL_NEW = ['TIPOPAGO', 'NUE', 'NUP', 'RFC', 'CURP', 'NOMBRE', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
 const COL_BASE = ['NUM', 'NE', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'OBSERVACIONES'];
-const COL_CASH = ['RFC', 'NOMBRE', 'MODALIDAD', 'MONTO', 'MOTIVO'];
 const COL_REMOVALS = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'MOTIVO'];
 const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
+const COL_EFECTIVOS = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO', 'OBSERVACIONES'];
 
 // Required columns to detect header row
 const REQUIRED_BASE_COLS = ['NOMBRE', 'RFC'];
 const REQUIRED_NEW_COLS = ['RFC', 'NOMBRE'];
-const REQUIRED_CASH_COLS = ['RFC', 'NOMBRE'];
 //const MAX_HEADER_SEARCH_ROWS = 20; // Search headers in first 20 rows
 
 // Project code for Jardin (can be changed if needed)
@@ -41,13 +40,10 @@ const btnBackPensiones = document.getElementById('btnBackPensiones');
 // DOM Elements - Nominas
 const fileNewInput = document.getElementById('fileNuevo');
 const fileBaseInput = document.getElementById('fileBase');
-const fileCashInput = document.getElementById('fileCash');
 const fileNewName = document.getElementById('fileNuevoName');
 const fileBaseName = document.getElementById('fileBaseName');
-const fileCashName = document.getElementById('fileCashName');
 const btnMerge = document.getElementById('btnMerge');
 const btnDownload = document.getElementById('btnDownload');
-const btnClearCash = document.getElementById('btnClearCash');
 const resultsSection = document.getElementById('results');
 
 // Tabs
@@ -74,28 +70,28 @@ const tableFinal = document.getElementById('tableFinal');
  * Shows a specific section and hides others
  */
 function showSection(sectionName) {
-	// Hide all sections
-	mainMenu.classList.add('hidden');
-	nominasSection.classList.add('hidden');
-	pensionesSection.classList.add('hidden');
-	
-	// Show selected section
-	if (sectionName === 'nominas') {
-		nominasSection.classList.remove('hidden');
-	} else if (sectionName === 'pensiones') {
-		pensionesSection.classList.remove('hidden');
-	} else {
-		mainMenu.classList.remove('hidden');
-	}
+  // Hide all sections
+  mainMenu.classList.add('hidden');
+  nominasSection.classList.add('hidden');
+  pensionesSection.classList.add('hidden');
+
+  // Show selected section
+  if (sectionName === 'nominas') {
+    nominasSection.classList.remove('hidden');
+  } else if (sectionName === 'pensiones') {
+    pensionesSection.classList.remove('hidden');
+  } else {
+    mainMenu.classList.remove('hidden');
+  }
 }
 
 /**
  * Returns to main menu
  */
 function showMainMenu() {
-	mainMenu.classList.remove('hidden');
-	nominasSection.classList.add('hidden');
-	pensionesSection.classList.add('hidden');
+  mainMenu.classList.remove('hidden');
+  nominasSection.classList.add('hidden');
+  pensionesSection.classList.add('hidden');
 }
 
 // ===============================
@@ -104,26 +100,26 @@ function showMainMenu() {
 
 // Menu option clicks (only if menu exists)
 if (menuOptions.length > 0) {
-	menuOptions.forEach(option => {
-		option.addEventListener('click', (e) => {
-			const section = e.currentTarget.dataset.section;
-			if (section) {
-				showSection(section);
-			}
-		});
-	});
+  menuOptions.forEach(option => {
+    option.addEventListener('click', (e) => {
+      const section = e.currentTarget.dataset.section;
+      if (section) {
+        showSection(section);
+      }
+    });
+  });
 }
 
 // Back buttons
 if (btnBackNominas) {
-	btnBackNominas.addEventListener('click', () => {
-		window.location.href = 'index.html';
-	});
+  btnBackNominas.addEventListener('click', () => {
+    window.location.href = 'index.html';
+  });
 }
 if (btnBackPensiones) {
-	btnBackPensiones.addEventListener('click', () => {
-		window.location.href = 'index.html';
-	});
+  btnBackPensiones.addEventListener('click', () => {
+    window.location.href = 'index.html';
+  });
 }
 
 // ===============================
@@ -146,22 +142,7 @@ fileBaseInput.addEventListener('change', (e) => {
   }
 });
 
-fileCashInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    fileCashName.textContent = file.name;
-    btnClearCash.classList.remove('hidden');
-    readExcel(file, 'cash');
-  }
-});
 
-btnClearCash.addEventListener('click', () => {
-  cashData = null;
-  fileCashInput.value = '';
-  fileCashName.textContent = 'Sin archivo';
-  btnClearCash.classList.add('hidden');
-  console.log('Cash Excel cleared');
-});
 
 btnMerge.addEventListener('click', () => {
   if (newData && baseData) {
@@ -198,27 +179,25 @@ function readExcel(file, type) {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      
+
       // Detect header row automatically
       let requiredCols;
       if (type === 'base') {
         requiredCols = REQUIRED_BASE_COLS;
-      } else if (type === 'cash') {
-        requiredCols = REQUIRED_CASH_COLS;
       } else {
         requiredCols = REQUIRED_NEW_COLS;
       }
       const headerRow = findHeaderRow(firstSheet, requiredCols);
-      
+
       if (headerRow === -1) {
         const colNames = requiredCols.join(', ');
         alert(`No se encontraron los encabezados (${colNames}) en las primeras ${MAX_HEADER_SEARCH_ROWS} filas del archivo.`);
         return;
       }
-      
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { 
+
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
         defval: '',
-        range: headerRow 
+        range: headerRow
       });
 
       // Normalize data using utils function
@@ -226,8 +205,6 @@ function readExcel(file, type) {
       let fileTypeName;
       if (type === 'new') {
         fileTypeName = 'Nuevo';
-      } else if (type === 'cash') {
-        fileTypeName = 'Efectivo';
       } else {
         fileTypeName = 'Base';
       }
@@ -243,9 +220,6 @@ function readExcel(file, type) {
       if (type === 'new') {
         newData = normalizedData;
         console.log('New Excel loaded:', newData.length, 'rows');
-      } else if (type === 'cash') {
-        cashData = normalizedData;
-        console.log('Cash Excel loaded:', cashData.length, 'rows');
       } else {
         baseData = normalizedData;
         console.log('Base Excel loaded:', baseData.length, 'rows');
@@ -282,9 +256,6 @@ function validateRequiredColumns(data, type) {
   } else if (type === 'base') {
     expectedCols = COL_BASE;
     fileTypeName = 'Base';
-  } else if (type === 'cash') {
-    expectedCols = COL_CASH;
-    fileTypeName = 'Efectivo';
   } else {
     return null;
   }
@@ -328,124 +299,55 @@ function performMerge() {
     if (rfc) rfcNewSet.add(rfc);
   });
 
-  // Build set of RFCs from cash payments (these are not considered additions)
-  // Also track removals from cash file (where MOTIVO contains "BAJA")
-  const cashRfcs = new Set();
-  const cashRemovals = new Map(); // RFC -> row data for people marked as "BAJA"
-  
-  if (cashData && cashData.length > 0) {
-    cashData.forEach(row => {
-      const rfc = (row.RFC || '').toUpperCase().trim();
-      const motivo = (row.MOTIVO || '').toUpperCase();
-      
-      if (rfc) {
-        cashRfcs.add(rfc);
-        
-        // Check if MOTIVO contains "BAJA"
-        if (motivo.includes('BAJA')) {
-          cashRemovals.set(rfc, row);
-          console.log('Removal detected from cash (BAJA):', row.NOMBRE || rfc, '-', row.MOTIVO);
-        }
-      }
-    });
-    console.log('Cash payments excluded:', cashRfcs.size, 'people');
-    console.log('Cash removals (BAJA):', cashRemovals.size, 'people');
-  }
-
-  // Detect additions:
-  // Case 1: People in new but not in base (and not in cash payments)
-  // Case 2: People in new, in base but WITHOUT bank/account info, and not in cash payments
+  // Detect additions: people in new Excel not in base (by RFC)
   additions = [];
   const addedRfcs = new Set();
   newData.forEach(rowNew => {
     const rfc = (rowNew.RFC || '').toUpperCase();
     if (!rfc || addedRfcs.has(rfc)) return;
-    
+
     const rowBase = rfcBase.get(rfc);
     const isInBase = !!rowBase;
-    const hasBankInfo = rowBase && String(rowBase.CUENTA || '').trim();
-    const isInCash = cashRfcs.has(rfc);
-    
-    // Case 1: Not in base and not in cash
-    if (!isInBase && !isInCash) {
+
+    if (!isInBase) {
       additions.push(rowNew);
       addedRfcs.add(rfc);
       console.log('Addition (new employee):', rowNew.NOMBRE || rfc);
     }
-    // Case 2: In base but no bank/account info and not in cash
-    else if (isInBase && !hasBankInfo && !isInCash) {
-      additions.push(rowNew);
-      addedRfcs.add(rfc);
-      console.log('Addition (no bank info):', rowNew.NOMBRE || rfc);
-    }
-    // Excluded: in cash payments
-    else if (!isInBase && isInCash) {
-      console.log('Excluded from additions (cash payment):', rowNew.NOMBRE || rfc);
-    }
   });
 
-  // Detect removals: 
-  // 1. People in base but not in new Excel
-  // 2. People in cash file with MOTIVO containing "BAJA"
+  // Detect removals: people in base but not in new Excel
   removals = [];
-  
-  // Case 1: in base but not in new
   rfcBase.forEach((rowBase, rfc) => {
     if (!rfcNewSet.has(rfc)) {
-      // Check if there's a MOTIVO from cash file for this person
-      const cashRow = cashRemovals.get(rfc);
       removals.push({
         ...rowBase,
-        MOTIVO: cashRow ? cashRow.MOTIVO : 'No aparece en nómina nueva'
+        MOTIVO: 'No aparece en nómina nueva'
       });
-    }
-  });
-  
-  // Case 2: marked as BAJA in cash file (add if not already in removals)
-  const removalsRfcs = new Set(removals.map(r => (r.RFC || '').toUpperCase()));
-  cashRemovals.forEach((cashRow, rfc) => {
-    if (!removalsRfcs.has(rfc)) {
-      // Try to get full info from base if available, otherwise use cash data
-      const baseRow = rfcBase.get(rfc);
-      if (baseRow) {
-        removals.push({
-          ...baseRow,
-          MOTIVO: cashRow.MOTIVO || ''
-        });
-      } else {
-        // Create a minimal row from cash data
-        removals.push({
-          NUM: '',
-          NOMBRE: cashRow.NOMBRE || '',
-          RFC: rfc,
-          CUENTA: '',
-          BANCO: '',
-          TELEFONO: '',
-          'CORREO ELECTRONICO': '',
-          'SE ENVIA SOBRE A': '',
-          MOTIVO: cashRow.MOTIVO || ''
-        });
-      }
     }
   });
 
   // Create merged: iterate through ALL rows in newData
   // Each row in newData becomes a row in mergedData (with base info if available)
   mergedData = [];
+  efectivosData = [];
   let num = 1;
 
   // Process ALL rows from new Excel (includes NORMAL and RETROACTIVO for same person)
   newData.forEach(rowNew => {
     const rfc = (rowNew.RFC || '').toUpperCase();
     const rowBase = rfcBase.get(rfc);
-    
-    mergedData.push({
+
+    const cuenta = rowBase && rowBase.CUENTA ? String(rowBase.CUENTA).trim() : '';
+    const hasAccount = cuenta.length > 0;
+
+    const mergedRow = {
       NUM: num++,
       NE: rowBase ? rowBase.NE : '',
       NOMBRE: rowNew.NOMBRE || (rowBase ? rowBase.NOMBRE : ''),
       RFC: rfc,
       CURP: rowNew.CURP || '',
-      CUENTA: rowBase ? rowBase.CUENTA : '',
+      CUENTA: cuenta,
       BANCO: rowBase ? rowBase.BANCO : '',
       TELEFONO: rowBase ? rowBase.TELEFONO : '',
       'CORREO ELECTRONICO': rowBase ? rowBase['CORREO ELECTRONICO'] : '',
@@ -459,7 +361,14 @@ function performMerge() {
       DESDE: rowNew.DESDE || '',
       HASTA: rowNew.HASTA || '',
       LIQUIDO: rowNew.LIQUIDO || ''
-    });
+    };
+
+    mergedData.push(mergedRow);
+
+    // If no account, add to efectivos
+    if (!hasAccount) {
+      efectivosData.push(mergedRow);
+    }
   });
 
   // Display results
@@ -528,6 +437,7 @@ function downloadMerged() {
 
 const btnSplit = document.getElementById('btnSplit');
 const btnDownloadAll = document.getElementById('btnDownloadAll');
+const btnDownloadEfectivosNominas = document.getElementById('btnDownloadEfectivosNominas');
 const splitResultsSection = document.getElementById('splitResults');
 const splitTree = document.getElementById('splitTree');
 
@@ -535,6 +445,9 @@ let splitData = null; // Stores the hierarchical split structure
 
 btnSplit.addEventListener('click', performSplit);
 btnDownloadAll.addEventListener('click', downloadAllSplitFiles);
+if (btnDownloadEfectivosNominas) {
+  btnDownloadEfectivosNominas.addEventListener('click', downloadEfectivosNominas);
+}
 
 /**
  * Determines if a project code belongs to "Jardin"
@@ -552,13 +465,13 @@ function getPayrollPeriod() {
   const today = new Date();
   const day = today.getDate();
   const month = today.getMonth(); // 0-11
-  
+
   const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   const mes = monthNames[month];
-  
+
   // First 15 days = 1a quincena, rest = 2a quincena
   const quincena = day <= 15 ? '1a' : '2a';
-  
+
   return {
     quincena,
     mes,
@@ -594,16 +507,16 @@ function performSplit() {
       console.log('Split skipped (no bank):', row.NOMBRE || row.RFC);
       return;
     }
-    
+
     // Level 1: Proyecto (Jardin vs Otros) - only if flag is enabled
     let projectGroup = null;
     if (SPLIT_BY_PROJECT) {
       projectGroup = isJardin(row.PROYECTO) ? 'JARDIN' : 'OTROS';
     }
-    
+
     // Level 2: Nomina
     const nomina = (row.NOMINA || 'SIN_NOMINA').toUpperCase().trim();
-    
+
     // Level 3: TipoPago
     const tipoPago = (row.TIPOPAGO || 'SIN_TIPOPAGO').toUpperCase().trim();
 
@@ -645,11 +558,11 @@ function performSplit() {
 function displaySplitResults() {
   splitResultsSection.classList.remove('hidden');
   splitTree.innerHTML = '';
-  
+
   // Display calculated payroll period
   const payrollPeriod = getPayrollPeriod();
   document.getElementById('payrollPeriodDisplay').textContent = payrollPeriod.display;
-  
+
   // Update split description based on flag
   const splitDescription = document.getElementById('splitDescription');
   if (SPLIT_BY_PROJECT) {
@@ -686,7 +599,7 @@ function displaySplitResults() {
         for (const [tipoPago, bancos] of Object.entries(tipoPagos)) {
           const tipoPagoDiv = document.createElement('div');
           tipoPagoDiv.className = 'split-tipopago-group';
-          
+
           const tipoPagoName = document.createElement('div');
           tipoPagoName.className = 'split-tipopago-name';
           tipoPagoName.textContent = `💰 ${tipoPago}`;
@@ -695,17 +608,17 @@ function displaySplitResults() {
           for (const [banco, rows] of Object.entries(bancos)) {
             const bancoDiv = document.createElement('div');
             bancoDiv.className = 'split-banco';
-            
+
             const totalAmount = calculateTotalAmount(rows, 'LIQUIDO');
             const formattedAmount = formatCurrency(totalAmount);
-            
+
             bancoDiv.innerHTML = `
               <span>🏦 ${banco}</span>
               <span class="count">${rows.length} registros</span>
               <span class="amount">${formattedAmount}</span>
               <button class="btn-download-single" data-project="${projectGroup}" data-nomina="${nomina}" data-tipopago="${tipoPago}" data-banco="${banco}">⬇️</button>
             `;
-            
+
             tipoPagoDiv.appendChild(bancoDiv);
           }
 
@@ -734,7 +647,7 @@ function displaySplitResults() {
       for (const [tipoPago, bancos] of Object.entries(tipoPagos)) {
         const tipoPagoDiv = document.createElement('div');
         tipoPagoDiv.className = 'split-tipopago-group';
-        
+
         const tipoPagoName = document.createElement('div');
         tipoPagoName.className = 'split-tipopago-name';
         tipoPagoName.textContent = `💰 ${tipoPago}`;
@@ -743,17 +656,17 @@ function displaySplitResults() {
         for (const [banco, rows] of Object.entries(bancos)) {
           const bancoDiv = document.createElement('div');
           bancoDiv.className = 'split-banco';
-          
+
           const totalAmount = calculateTotalAmount(rows, 'LIQUIDO');
           const formattedAmount = formatCurrency(totalAmount);
-          
+
           bancoDiv.innerHTML = `
             <span>🏦 ${banco}</span>
             <span class="count">${rows.length} registros</span>
             <span class="amount">${formattedAmount}</span>
             <button class="btn-download-single" data-nomina="${nomina}" data-tipopago="${tipoPago}" data-banco="${banco}">⬇️</button>
           `;
-          
+
           tipoPagoDiv.appendChild(bancoDiv);
         }
 
@@ -784,16 +697,16 @@ function displaySplitResults() {
  * @returns {string} - 'Tarjeta' if 16 digits, 'Cheque' if 9 or 12 digits
  */
 function getBanamexAccountType(cuenta) {
-	const cuentaStr = String(cuenta || '').trim();
-	// Remove all non-digit characters to count only digits
-	const digitsOnly = cuentaStr.replace(/\D/g, '');
-	const digitCount = digitsOnly.length;
-	
-	if (digitCount === 16) {
-		return 'Tarjeta';
-	} else {
-		return 'Cheque';
-	}		
+  const cuentaStr = String(cuenta || '').trim();
+  // Remove all non-digit characters to count only digits
+  const digitsOnly = cuentaStr.replace(/\D/g, '');
+  const digitCount = digitsOnly.length;
+
+  if (digitCount === 16) {
+    return 'Tarjeta';
+  } else {
+    return 'Cheque';
+  }
 }
 
 /**
@@ -807,7 +720,7 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
   } else {
     rows = splitData[nomina]?.[tipoPago]?.[banco];
   }
-  
+
   if (!rows || rows.length === 0) {
     alert('No hay datos para este archivo');
     return;
@@ -816,7 +729,7 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
   const wb = XLSX.utils.book_new();
   let ws;
   let fileName;
-  
+
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
 
@@ -825,7 +738,7 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     // Get payroll period (calculated automatically)
     const payrollPeriod = getPayrollPeriod();
     const conceptoBancario = payrollPeriod.display;
-    
+
     // Transform data to Banamex format
     const banamexData = rows.map((row, index) => ({
       'Tipo de Cuenta': getBanamexAccountType(row.CUENTA),
@@ -835,14 +748,14 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
       'Ref. Num.': index + 1,
       'Ref. AlfN.': conceptoBancario
     }));
-    
+
     const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
     ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
-    
+
     const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
     ws['!cols'] = colWidths;
-    
-    fileName = SPLIT_BY_PROJECT 
+
+    fileName = SPLIT_BY_PROJECT
       ? `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`
       : `BANAMEX_${nomina}_${tipoPago}_${dateStr}.xlsx`;
   } else if (banco.toUpperCase() === 'BANORTE') {
@@ -855,24 +768,24 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
       'TIPO DE CUENTA': '01',
       'CUENTA': row.CUENTA || ''
     }));
-    
+
     const banorteHeaders = ['NO. EMPLEADO', 'NOMBRE', 'IMPORTE', 'NO. BANCO RECEPTOR', 'TIPO DE CUENTA', 'CUENTA'];
     ws = XLSX.utils.json_to_sheet(banorteData, { header: banorteHeaders });
-    
+
     const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
     ws['!cols'] = colWidths;
-    
-    fileName = SPLIT_BY_PROJECT 
+
+    fileName = SPLIT_BY_PROJECT
       ? `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`
       : `BANORTE_${nomina}_${tipoPago}_${dateStr}.xlsx`;
   } else {
     // Standard format for other banks
     ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
-    
+
     const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
     ws['!cols'] = colWidths;
-    
-    fileName = SPLIT_BY_PROJECT 
+
+    fileName = SPLIT_BY_PROJECT
       ? `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`
       : `${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
   }
@@ -893,7 +806,7 @@ function downloadAllSplitFiles() {
 
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-  
+
   // Get payroll period (calculated automatically)
   const payrollPeriod = getPayrollPeriod();
   const conceptoBancario = payrollPeriod.display;
@@ -921,13 +834,13 @@ function downloadAllSplitFiles() {
                 'Ref. Num.': index + 1,
                 'Ref. AlfN.': conceptoBancario
               }));
-              
+
               const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
               ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
-              
+
               const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
               ws['!cols'] = colWidths;
-              
+
               fileName = `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
             } else if (banco.toUpperCase() === 'BANORTE') {
               // Transform data to Banorte format
@@ -939,21 +852,21 @@ function downloadAllSplitFiles() {
                 'TIPO DE CUENTA': '01',
                 'CUENTA': row.CUENTA || ''
               }));
-              
+
               const banorteHeaders = ['NO. EMPLEADO', 'NOMBRE', 'IMPORTE', 'NO. BANCO RECEPTOR', 'TIPO DE CUENTA', 'CUENTA'];
               ws = XLSX.utils.json_to_sheet(banorteData, { header: banorteHeaders });
-              
+
               const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
               ws['!cols'] = colWidths;
-              
+
               fileName = `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
             } else {
               // Standard format for other banks
               ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
-              
+
               const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
               ws['!cols'] = colWidths;
-              
+
               fileName = `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
             }
 
@@ -985,13 +898,13 @@ function downloadAllSplitFiles() {
               'Ref. Num.': index + 1,
               'Ref. AlfN.': conceptoBancario
             }));
-            
+
             const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
             ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
-            
+
             const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
             ws['!cols'] = colWidths;
-            
+
             fileName = `BANAMEX_${nomina}_${tipoPago}_${dateStr}.xlsx`;
           } else if (banco.toUpperCase() === 'BANORTE') {
             // Transform data to Banorte format
@@ -1003,21 +916,21 @@ function downloadAllSplitFiles() {
               'TIPO DE CUENTA': '01',
               'CUENTA': row.CUENTA || ''
             }));
-            
+
             const banorteHeaders = ['NO. EMPLEADO', 'NOMBRE', 'IMPORTE', 'NO. BANCO RECEPTOR', 'TIPO DE CUENTA', 'CUENTA'];
             ws = XLSX.utils.json_to_sheet(banorteData, { header: banorteHeaders });
-            
+
             const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
             ws['!cols'] = colWidths;
-            
+
             fileName = `BANORTE_${nomina}_${tipoPago}_${dateStr}.xlsx`;
           } else {
             // Standard format for other banks
             ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
-            
+
             const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
             ws['!cols'] = colWidths;
-            
+
             fileName = `${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
           }
 
@@ -1027,4 +940,30 @@ function downloadAllSplitFiles() {
       }
     }
   }
+}
+
+/**
+ * Downloads the efectivos (cash payments) file
+ * Includes people without bank accounts with OBSERVACIONES column
+ */
+function downloadEfectivosNominas() {
+  if (!efectivosData || efectivosData.length === 0) {
+    alert('No hay registros sin cuenta para descargar');
+    return;
+  }
+
+  const today = new Date();
+  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+  const fileName = `Nominas_Efectivos_${dateStr}.xlsx`;
+
+  // Use COL_EFECTIVOS which includes OBSERVACIONES
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(efectivosData, { header: COL_EFECTIVOS });
+
+  // Adjust column widths
+  const colWidths = COL_EFECTIVOS.map(col => ({ wch: Math.max(col.length, 15) }));
+  ws['!cols'] = colWidths;
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Efectivos');
+  XLSX.writeFile(wb, fileName);
 }
