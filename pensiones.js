@@ -286,7 +286,7 @@ function performMergePensiones() {
 	// Determine merged columns (all fields from both files)
 	const mergedColumns = [
 		'NO.', 'NOMBRE', 'RFC', 'BENEFICIARIO', 'CUENTA', 'NE', 'BANCO',
-		'PROYECTO', 'FOLIO', 'IMPORTE', 'CVE', 'NOMINA', 'TOTAL DE DESCUENTOS', 'MODALIDAD'
+		'PROYECTO', 'FOLIO', 'IMPORTE', 'CVE', 'NOMINA', 'TOTAL DE DESCUENTOS', 'MODALIDAD', 'OBSERVACIONES'
 	];
 
 	quincenalData.forEach(rowQuincenal => {
@@ -310,7 +310,8 @@ function performMergePensiones() {
 			'CVE': rowQuincenal.CVE || '',
 			'NOMINA': rowQuincenal.NOMINA || '',
 			'TOTAL DE DESCUENTOS': rowQuincenal['TOTAL DE DESCUENTOS'] || 0,
-			'MODALIDAD': getModalidad(rowBase)
+			'MODALIDAD': getModalidad(rowBase),
+			'OBSERVACIONES': ''
 		};
 
 		mergedPensionesData.push(mergedRow);
@@ -323,6 +324,11 @@ function performMergePensiones() {
 
 	// Store merged columns for later use
 	window.COL_MERGED_PENSIONES = mergedColumns;
+	// Columns for split files (without OBSERVACIONES)
+	window.COL_SPLIT_PENSIONES = [
+		'NO.', 'NOMBRE', 'RFC', 'BENEFICIARIO', 'CUENTA', 'NE', 'BANCO',
+		'PROYECTO', 'FOLIO', 'IMPORTE', 'CVE', 'NOMINA', 'TOTAL DE DESCUENTOS', 'MODALIDAD'
+	];
 
 	// Display results
 	displayResultsPensiones();
@@ -521,9 +527,9 @@ function downloadSingleSplitPensionesFile(modalidad, banco) {
 		fileName = `BANORTE_${modalidad}_${dateStr}.xlsx`;
 	} else {
 		// Standard format for other banks
-		ws = XLSX.utils.json_to_sheet(rows, { header: window.COL_MERGED_PENSIONES });
+		ws = XLSX.utils.json_to_sheet(rows, { header: window.COL_SPLIT_PENSIONES });
 
-		const colWidths = window.COL_MERGED_PENSIONES.map(col => ({ wch: Math.max(col.length, 15) }));
+		const colWidths = window.COL_SPLIT_PENSIONES.map(col => ({ wch: Math.max(col.length, 15) }));
 		ws['!cols'] = colWidths;
 
 		fileName = `${modalidad}_${banco}_${dateStr}.xlsx`;
@@ -597,9 +603,9 @@ function downloadAllSplitPensionesFiles() {
 				fileName = `BANORTE_${modalidad}_${dateStr}.xlsx`;
 			} else {
 				// Standard format for other banks
-				ws = XLSX.utils.json_to_sheet(rows, { header: window.COL_MERGED_PENSIONES });
+				ws = XLSX.utils.json_to_sheet(rows, { header: window.COL_SPLIT_PENSIONES });
 
-				const colWidths = window.COL_MERGED_PENSIONES.map(col => ({ wch: Math.max(col.length, 15) }));
+				const colWidths = window.COL_SPLIT_PENSIONES.map(col => ({ wch: Math.max(col.length, 15) }));
 				ws['!cols'] = colWidths;
 
 				fileName = `${modalidad}_${banco}_${dateStr}.xlsx`;
