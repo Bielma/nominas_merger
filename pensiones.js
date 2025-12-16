@@ -311,6 +311,8 @@ function performMergePensiones() {
 			'NOMINA': rowQuincenal.NOMINA || '',
 			'TOTAL DE DESCUENTOS': rowQuincenal['TOTAL DE DESCUENTOS'] || 0,
 			'MODALIDAD': getModalidad(rowBase),
+			'TELEFONO': rowBase ? (rowBase.TELEFONO || '') : '',
+			'SE ENVIA SOBRE A': rowBase ? (rowBase['SE ENVIA SOBRE A'] || '') : '',
 			'OBSERVACIONES': ''
 		};
 
@@ -328,6 +330,10 @@ function performMergePensiones() {
 	window.COL_SPLIT_PENSIONES = [
 		'NO.', 'NOMBRE', 'RFC', 'BENEFICIARIO', 'CUENTA', 'NE', 'BANCO',
 		'PROYECTO', 'FOLIO', 'IMPORTE', 'CVE', 'NOMINA', 'TOTAL DE DESCUENTOS', 'MODALIDAD'
+	];
+	// Columns for efectivos file (simplified)
+	window.COL_EFECTIVOS_PENSIONES = [
+		'NOMBRE', 'PROYECTO', 'MODALIDAD', 'SE ENVIA SOBRE A', 'IMPORTE', 'TELEFONO', 'OBSERVACIONES'
 	];
 
 	// Display results
@@ -630,6 +636,18 @@ function downloadEfectivosFile() {
 	const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
 	const fileName = `Pensiones_Efectivos_${dateStr}.xlsx`;
 
-	downloadExcel(efectivosData, window.COL_MERGED_PENSIONES, 'Efectivos', fileName);
+	// Transform data to only include the fields in COL_EFECTIVOS_PENSIONES
+	const efectivosFiltered = efectivosData.map(row => ({
+		'NOMBRE': row.NOMBRE || '',
+		'PROYECTO': row.PROYECTO || '',
+		'MODALIDAD': row.MODALIDAD || '',
+		'SE ENVIA SOBRE A': row['SE ENVIA SOBRE A'] || '',
+		'IMPORTE': row.IMPORTE || 0,
+		'TELEFONO': row.TELEFONO || '',
+		'OBSERVACIONES': row.OBSERVACIONES || ''
+	}));
+
+	downloadExcel(efectivosFiltered, window.COL_EFECTIVOS_PENSIONES, 'Efectivos', fileName);
 }
+
 

@@ -16,7 +16,7 @@ const COL_NEW = ['TIPOPAGO', 'NUE', 'NUP', 'RFC', 'CURP', 'NOMBRE', 'CATEGORIA',
 const COL_BASE = ['NUM', 'NE', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'OBSERVACIONES'];
 const COL_REMOVALS = ['NUM', 'NOMBRE', 'RFC', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'MOTIVO'];
 const COL_MERGED = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO'];
-const COL_EFECTIVOS = ['NUM', 'NOMBRE', 'RFC', 'CURP', 'CUENTA', 'BANCO', 'TELEFONO', 'CORREO ELECTRONICO', 'SE ENVIA SOBRE A', 'TIPOPAGO', 'CATEGORIA', 'PUESTO', 'PROYECTO', 'NOMINA', 'DESDE', 'HASTA', 'LIQUIDO', 'OBSERVACIONES'];
+const COL_EFECTIVOS = ['NOMBRE', 'PROYECTO', 'MODALIDAD', 'SE ENVIA SOBRE A', 'LIQUIDO', 'TELEFONO', 'OBSERVACIONES'];
 
 // Required columns to detect header row
 const REQUIRED_BASE_COLS = ['NOMBRE', 'RFC'];
@@ -354,6 +354,7 @@ function performMerge() {
       'SE ENVIA SOBRE A': rowBase ? rowBase['SE ENVIA SOBRE A'] : '',
       OBSERVACIONES: rowBase ? rowBase.OBSERVACIONES : '',
       TIPOPAGO: rowNew.TIPOPAGO || '',
+      MODALIDAD: rowNew.TIPOPAGO || '', // MODALIDAD is same as TIPOPAGO for nominas
       CATEGORIA: rowNew.CATEGORIA || '',
       PUESTO: rowNew.PUESTO || '',
       PROYECTO: rowNew.PROYECTO || '',
@@ -956,9 +957,19 @@ function downloadEfectivosNominas() {
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
   const fileName = `Nominas_Efectivos_${dateStr}.xlsx`;
 
-  // Use COL_EFECTIVOS which includes OBSERVACIONES
+  // Transform data to only include the fields in COL_EFECTIVOS
+  const efectivosFiltered = efectivosData.map(row => ({
+    'NOMBRE': row.NOMBRE || '',
+    'PROYECTO': row.PROYECTO || '',
+    'MODALIDAD': row.MODALIDAD || '',
+    'SE ENVIA SOBRE A': row['SE ENVIA SOBRE A'] || '',
+    'LIQUIDO': row.LIQUIDO || 0,
+    'TELEFONO': row.TELEFONO || '',
+    'OBSERVACIONES': row.OBSERVACIONES || ''
+  }));
+
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(efectivosData, { header: COL_EFECTIVOS });
+  const ws = XLSX.utils.json_to_sheet(efectivosFiltered, { header: COL_EFECTIVOS });
 
   // Adjust column widths
   const colWidths = COL_EFECTIVOS.map(col => ({ wch: Math.max(col.length, 15) }));
