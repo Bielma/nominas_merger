@@ -426,7 +426,7 @@ function downloadMerged() {
   // Generate filename with date
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-  const fileName = `Nomina_Fusionada_${dateStr}.xlsx`;
+  const fileName = `Nomina_Fusionada_${dateStr}.xls`;
 
   // Download
   XLSX.writeFile(wb, fileName);
@@ -757,8 +757,8 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     ws['!cols'] = colWidths;
 
     fileName = SPLIT_BY_PROJECT
-      ? `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`
-      : `BANAMEX_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+      ? `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xls`
+      : `BANAMEX_${nomina}_${tipoPago}_${dateStr}.xls`;
   } else if (banco.toUpperCase() === 'BANORTE') {
     // Transform data to Banorte format
     const banorteData = rows.map((row) => ({
@@ -777,8 +777,8 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     ws['!cols'] = colWidths;
 
     fileName = SPLIT_BY_PROJECT
-      ? `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`
-      : `BANORTE_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+      ? `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xls`
+      : `BANORTE_${nomina}_${tipoPago}_${dateStr}.xls`;
   } else {
     // Standard format for other banks
     ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
@@ -787,8 +787,8 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     ws['!cols'] = colWidths;
 
     fileName = SPLIT_BY_PROJECT
-      ? `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`
-      : `${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
+      ? `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xls`
+      : `${nomina}_${tipoPago}_${banco}_${dateStr}.xls`;
   }
 
   XLSX.utils.book_append_sheet(wb, ws, 'Datos');
@@ -842,7 +842,7 @@ function downloadAllSplitFiles() {
               const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
               ws['!cols'] = colWidths;
 
-              fileName = `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+              fileName = `BANAMEX_${project}_${nomina}_${tipoPago}_${dateStr}.xls`;
             } else if (banco.toUpperCase() === 'BANORTE') {
               // Transform data to Banorte format
               const banorteData = rows.map((row) => ({
@@ -860,7 +860,7 @@ function downloadAllSplitFiles() {
               const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
               ws['!cols'] = colWidths;
 
-              fileName = `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+              fileName = `BANORTE_${project}_${nomina}_${tipoPago}_${dateStr}.xls`;
             } else {
               // Standard format for other banks
               ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
@@ -868,7 +868,7 @@ function downloadAllSplitFiles() {
               const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
               ws['!cols'] = colWidths;
 
-              fileName = `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
+              fileName = `${project}_${nomina}_${tipoPago}_${banco}_${dateStr}.xls`;
             }
 
             XLSX.utils.book_append_sheet(wb, ws, 'Datos');
@@ -906,7 +906,7 @@ function downloadAllSplitFiles() {
             const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
             ws['!cols'] = colWidths;
 
-            fileName = `BANAMEX_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+            fileName = `BANAMEX_${nomina}_${tipoPago}_${dateStr}.xls`;
           } else if (banco.toUpperCase() === 'BANORTE') {
             // Transform data to Banorte format
             const banorteData = rows.map((row) => ({
@@ -924,7 +924,7 @@ function downloadAllSplitFiles() {
             const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
             ws['!cols'] = colWidths;
 
-            fileName = `BANORTE_${nomina}_${tipoPago}_${dateStr}.xlsx`;
+            fileName = `BANORTE_${nomina}_${tipoPago}_${dateStr}.xls`;
           } else {
             // Standard format for other banks
             ws = XLSX.utils.json_to_sheet(rows, { header: COL_MERGED });
@@ -932,7 +932,7 @@ function downloadAllSplitFiles() {
             const colWidths = COL_MERGED.map(col => ({ wch: Math.max(col.length, 15) }));
             ws['!cols'] = colWidths;
 
-            fileName = `${nomina}_${tipoPago}_${banco}_${dateStr}.xlsx`;
+            fileName = `${nomina}_${tipoPago}_${banco}_${dateStr}.xls`;
           }
 
           XLSX.utils.book_append_sheet(wb, ws, 'Datos');
@@ -955,7 +955,7 @@ function downloadEfectivosNominas() {
 
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-  const fileName = `Nominas_Efectivos_${dateStr}.xlsx`;
+  const fileName = `Nominas_Efectivos_${dateStr}.xls`;
 
   // Transform data to only include the fields in COL_EFECTIVOS
   const efectivosFiltered = efectivosData.map(row => ({

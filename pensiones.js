@@ -377,7 +377,7 @@ function downloadMergedPensiones() {
 
 	const today = new Date();
 	const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-	const fileName = `Pensiones_Fusionadas_${dateStr}.xlsx`;
+	const fileName = `Pensiones_Fusionadas_${dateStr}.xls`;
 
 	downloadExcel(mergedPensionesData, window.COL_MERGED_PENSIONES, 'Pensiones Fusionadas', fileName);
 }
@@ -512,7 +512,7 @@ function downloadSingleSplitPensionesFile(modalidad, banco) {
 		const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
 		ws['!cols'] = colWidths;
 
-		fileName = `BANAMEX_${modalidad}_${dateStr}.xlsx`;
+		fileName = `BANAMEX_${modalidad}_${dateStr}.xls`;
 	} else if (banco.toUpperCase() === 'BANORTE') {
 		// Transform data to Banorte format
 		const banorteData = rows.map((row) => ({
@@ -530,7 +530,7 @@ function downloadSingleSplitPensionesFile(modalidad, banco) {
 		const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
 		ws['!cols'] = colWidths;
 
-		fileName = `BANORTE_${modalidad}_${dateStr}.xlsx`;
+		fileName = `BANORTE_${modalidad}_${dateStr}.xls`;
 	} else {
 		// Standard format for other banks
 		ws = XLSX.utils.json_to_sheet(rows, { header: window.COL_SPLIT_PENSIONES });
@@ -538,7 +538,7 @@ function downloadSingleSplitPensionesFile(modalidad, banco) {
 		const colWidths = window.COL_SPLIT_PENSIONES.map(col => ({ wch: Math.max(col.length, 15) }));
 		ws['!cols'] = colWidths;
 
-		fileName = `${modalidad}_${banco}_${dateStr}.xlsx`;
+		fileName = `${modalidad}_${banco}_${dateStr}.xls`;
 	}
 
 	XLSX.utils.book_append_sheet(wb, ws, 'Datos');
@@ -588,7 +588,7 @@ function downloadAllSplitPensionesFiles() {
 				const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
 				ws['!cols'] = colWidths;
 
-				fileName = `BANAMEX_${modalidad}_${dateStr}.xlsx`;
+				fileName = `BANAMEX_${modalidad}_${dateStr}.xls`;
 			} else if (banco.toUpperCase() === 'BANORTE') {
 				// Transform data to Banorte format
 				const banorteData = rows.map((row) => ({
@@ -606,7 +606,7 @@ function downloadAllSplitPensionesFiles() {
 				const colWidths = banorteHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
 				ws['!cols'] = colWidths;
 
-				fileName = `BANORTE_${modalidad}_${dateStr}.xlsx`;
+				fileName = `BANORTE_${modalidad}_${dateStr}.xls`;
 			} else {
 				// Standard format for other banks
 				ws = XLSX.utils.json_to_sheet(rows, { header: window.COL_SPLIT_PENSIONES });
@@ -614,7 +614,7 @@ function downloadAllSplitPensionesFiles() {
 				const colWidths = window.COL_SPLIT_PENSIONES.map(col => ({ wch: Math.max(col.length, 15) }));
 				ws['!cols'] = colWidths;
 
-				fileName = `${modalidad}_${banco}_${dateStr}.xlsx`;
+				fileName = `${modalidad}_${banco}_${dateStr}.xls`;
 			}
 
 			XLSX.utils.book_append_sheet(wb, ws, 'Datos');
@@ -634,7 +634,7 @@ function downloadEfectivosFile() {
 
 	const today = new Date();
 	const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-	const fileName = `Pensiones_Efectivos_${dateStr}.xlsx`;
+	const fileName = `Pensiones_Efectivos_${dateStr}.xls`;
 
 	// Transform data to only include the fields in COL_EFECTIVOS_PENSIONES
 	const efectivosFiltered = efectivosData.map(row => ({
