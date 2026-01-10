@@ -509,6 +509,9 @@ function downloadSingleSplitPensionesFile(modalidad, banco) {
 		const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
 		ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
 
+		// Format headers in bold for Banamex
+		formatHeadersBold(ws);
+
 		const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
 		ws['!cols'] = colWidths;
 
@@ -582,13 +585,16 @@ function downloadAllSplitPensionesFiles() {
 					'Ref. AlfN.': conceptoBancario
 				}));
 
-				const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
-				ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
+			const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
+			ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
 
-				const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
-				ws['!cols'] = colWidths;
+			// Format headers in bold for Banamex
+			formatHeadersBold(ws);
 
-				fileName = `BANAMEX_${modalidad}_${dateStr}.xls`;
+			const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
+			ws['!cols'] = colWidths;
+
+			fileName = `BANAMEX_${modalidad}_${dateStr}.xls`;
 			} else if (banco.toUpperCase() === 'BANORTE') {
 				// Transform data to Banorte format
 				const banorteData = rows.map((row) => ({

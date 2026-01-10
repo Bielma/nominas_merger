@@ -160,6 +160,40 @@ function renderTable(table, data, columns) {
 }
 
 /**
+ * Formats header row in bold for Excel worksheet
+ * @param {object} ws - XLSX worksheet object
+ */
+function formatHeadersBold(ws) {
+	if (!ws['!ref']) return;
+	
+	const range = XLSX.utils.decode_range(ws['!ref']);
+	const headerRow = range.s.r; // First row (usually 0)
+	
+	// Format each header cell in the first row
+	for (let col = range.s.c; col <= range.e.c; col++) {
+		const cellAddress = XLSX.utils.encode_cell({ r: headerRow, c: col });
+		
+		// Ensure cell exists
+		if (!ws[cellAddress]) {
+			continue;
+		}
+		
+		// Initialize style object if it doesn't exist
+		if (!ws[cellAddress].s) {
+			ws[cellAddress].s = {};
+		}
+		
+		// Initialize font object if it doesn't exist
+		if (!ws[cellAddress].s.font) {
+			ws[cellAddress].s.font = {};
+		}
+		
+		// Set bold style
+		ws[cellAddress].s.font.bold = true;
+	}
+}
+
+/**
  * Downloads data as Excel file
  * @param {Array} data - Data to export
  * @param {string[]} columns - Column headers

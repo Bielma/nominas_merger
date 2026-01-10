@@ -753,6 +753,9 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
     ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
 
+    // Format headers in bold for Banamex
+    formatHeadersBold(ws);
+
     const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
     ws['!cols'] = colWidths;
 
@@ -839,6 +842,9 @@ function downloadAllSplitFiles() {
               const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
               ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
 
+              // Format headers in bold for Banamex
+              formatHeadersBold(ws);
+
               const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
               ws['!cols'] = colWidths;
 
@@ -902,6 +908,9 @@ function downloadAllSplitFiles() {
 
             const banamexHeaders = ['Tipo de Cuenta', 'Cuenta', 'Importe', 'Nombre/Razón Social', 'Ref. Num.', 'Ref. AlfN.'];
             ws = XLSX.utils.json_to_sheet(banamexData, { header: banamexHeaders });
+
+            // Format headers in bold for Banamex
+            formatHeadersBold(ws);
 
             const colWidths = banamexHeaders.map(col => ({ wch: Math.max(col.length, 20) }));
             ws['!cols'] = colWidths;
