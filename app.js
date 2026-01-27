@@ -733,8 +733,8 @@ function normalizeBanorteName(nombre) {
   normalized = normalized.replace(/[\u200B-\u200D\uFEFF]/g, '');
   
   // Limit length to 100 characters (typical bank limit)
-  if (normalized.length > 100) {
-    normalized = normalized.substring(0, 100).trim();
+  if (normalized.length > 32) {
+    normalized = normalized.substring(0, 32).trim();
   }
   
   return normalized;
