@@ -711,6 +711,36 @@ function getBanamexAccountType(cuenta) {
 }
 
 /**
+ * Normalizes name field for Banorte format
+ * Removes leading/trailing spaces, multiple consecutive spaces, and control characters
+ * @param {string} nombre - Name to normalize
+ * @returns {string} - Normalized name
+ */
+function normalizeBanorteName(nombre) {
+  if (!nombre) return '';
+  
+  // Convert to string and trim
+  let normalized = String(nombre).trim();
+  
+  // Replace multiple consecutive spaces with single space
+  normalized = normalized.replace(/\s+/g, ' ');
+  
+  // Remove control characters (non-printable characters like \n, \r, \t, etc.)
+  // Keep all printable characters including accented letters and special characters
+  normalized = normalized.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+  
+  // Remove zero-width characters and other invisible characters
+  normalized = normalized.replace(/[\u200B-\u200D\uFEFF]/g, '');
+  
+  // Limit length to 100 characters (typical bank limit)
+  if (normalized.length > 100) {
+    normalized = normalized.substring(0, 100).trim();
+  }
+  
+  return normalized;
+}
+
+/**
  * Downloads a single split file
  * For BANAMEX: special format with specific columns
  */
@@ -766,7 +796,7 @@ function downloadSingleSplitFile(project, nomina, tipoPago, banco) {
     // Transform data to Banorte format
     const banorteData = rows.map((row) => ({
       'NO. EMPLEADO': row.NE || '',
-      'NOMBRE': row.NOMBRE || '',
+      'NOMBRE': normalizeBanorteName(row.NOMBRE),
       'IMPORTE': row.LIQUIDO || 0,
       'NO. BANCO RECEPTOR': '072',
       'TIPO DE CUENTA': '01',
@@ -853,7 +883,7 @@ function downloadAllSplitFiles() {
               // Transform data to Banorte format
               const banorteData = rows.map((row) => ({
                 'NO. EMPLEADO': row.NE || '',
-                'NOMBRE': row.NOMBRE || '',
+                'NOMBRE': normalizeBanorteName(row.NOMBRE),
                 'IMPORTE': row.LIQUIDO || 0,
                 'NO. BANCO RECEPTOR': '072',
                 'TIPO DE CUENTA': '01',
@@ -920,7 +950,7 @@ function downloadAllSplitFiles() {
             // Transform data to Banorte format
             const banorteData = rows.map((row) => ({
               'NO. EMPLEADO': row.NE || '',
-              'NOMBRE': row.NOMBRE || '',
+              'NOMBRE': normalizeBanorteName(row.NOMBRE),
               'IMPORTE': row.LIQUIDO || 0,
               'NO. BANCO RECEPTOR': '072',
               'TIPO DE CUENTA': '01',
