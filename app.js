@@ -354,7 +354,7 @@ function performMerge() {
       'SE ENVIA SOBRE A': rowBase ? rowBase['SE ENVIA SOBRE A'] : '',
       OBSERVACIONES: rowBase ? rowBase.OBSERVACIONES : '',
       TIPOPAGO: rowNew.TIPOPAGO || '',
-      MODALIDAD: rowNew.TIPOPAGO || '', // MODALIDAD is same as TIPOPAGO for nominas
+      MODALIDAD: hasAccount ? (rowNew.TIPOPAGO || '') : (rowNew.NOMINA || ''), // MODALIDAD is TIPOPAGO for accounts, NOMINA for efectivos
       CATEGORIA: rowNew.CATEGORIA || '',
       PUESTO: rowNew.PUESTO || '',
       PROYECTO: rowNew.PROYECTO || '',
